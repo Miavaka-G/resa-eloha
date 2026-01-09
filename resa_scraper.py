@@ -51,7 +51,7 @@ class resa_scraper(object):
         self.chrome_options.add_argument("--disable-dev-shm-usage")
         self.chrome_options.add_argument("--log-level=3") 
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        self.chrome_options.add_argument("--headless=new")
+        # self.chrome_options.add_argument("--headless=new") #le clique vers eloha semble e pas marche si headless
 
         self.data_container = []
         self.count_url_no_price = 0
