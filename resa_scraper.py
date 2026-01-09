@@ -240,55 +240,56 @@ class resa_scraper(object):
 
             else: #si par chance les typologies réapparaissent kkk
                 #09 01 2026 mettre pass car on ne va pas utiliser les infos du resanc meme si il y en a
-                for offre in offres_chambres_dispo:
-                    try:
-                        typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
-                        # input(f'Typology found: {typology}')
-                    except:
-                        input('Check selector, typology not found')
-                    try:
-                        #Demande du 06 01 2026 : récupérer la currency aussi
-                        price_with_currency = offre.find('span', {'class':'item-row__value sit-tarifs__offer-price'}).text.strip().replace(' ','')
-                        if 'XPF' in price_with_currency:
-                            price = price_with_currency.replace('XPF','')
-                            currency = 'XPF'
-                        elif ('EUR' or 'eur' or 'euro' or 'euros') in price_with_currency:
-                            price = price_with_currency.replace('EUR','').replace('eur','').replace('euro','').replace('euros','')
-                            currency = 'EUR'
-                        else:
-                            price = price_with_currency
-                        # input(f'Price found: {price_with_currency} / Price only: {price} / Currency only: {currency}')
-                    except:
-                        input('Check selector, price not found')
-                    try:
-                        container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
-                    except:
-                        input('Check selector, container name localite not found')
-                    try:
-                        nom = container_name_localite.find('h1').text.strip()
-                    except:
-                        input('Check selector, nom not found')
-                        pass
-                    try:
-                        localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
-                    except:
-                        input('Check selector, localite not found')        
+                # for offre in offres_chambres_dispo:
+                #     try:
+                #         typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
+                #         # input(f'Typology found: {typology}')
+                #     except:
+                #         input('Check selector, typology not found')
+                #     try:
+                #         #Demande du 06 01 2026 : récupérer la currency aussi
+                #         price_with_currency = offre.find('span', {'class':'item-row__value sit-tarifs__offer-price'}).text.strip().replace(' ','')
+                #         if 'XPF' in price_with_currency:
+                #             price = price_with_currency.replace('XPF','')
+                #             currency = 'XPF'
+                #         elif ('EUR' or 'eur' or 'euro' or 'euros') in price_with_currency:
+                #             price = price_with_currency.replace('EUR','').replace('eur','').replace('euro','').replace('euros','')
+                #             currency = 'EUR'
+                #         else:
+                #             price = price_with_currency
+                #         # input(f'Price found: {price_with_currency} / Price only: {price} / Currency only: {currency}')
+                #     except:
+                #         input('Check selector, price not found')
+                #     try:
+                #         container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
+                #     except:
+                #         input('Check selector, container name localite not found')
+                #     try:
+                #         nom = container_name_localite.find('h1').text.strip()
+                #     except:
+                #         input('Check selector, nom not found')
+                #         pass
+                #     try:
+                #         localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                #     except:
+                #         input('Check selector, localite not found')        
 
-                    # input(f'Nom found: {nom} / Localite found: {localite} / Typology found: {typology} / Price found: {price}')
+                #     # input(f'Nom found: {nom} / Localite found: {localite} / Typology found: {typology} / Price found: {price}')
 
-                    self.data_container.append({
-                        'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
-                        'checkin' : datas[index_dest]['checkin'],
-                        'checkout' : datas[index_dest]['checkout'],
-                        'price' : price,
-                        'currency' : currency,
-                        'typology' : typology,
-                        'name' : nom,
-                        'locality' : localite,
-                        'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
-                    })
+                #     self.data_container.append({
+                #         'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                #         'checkin' : datas[index_dest]['checkin'],
+                #         'checkout' : datas[index_dest]['checkout'],
+                #         'price' : price,
+                #         'currency' : currency,
+                #         'typology' : typology,
+                #         'name' : nom,
+                #         'locality' : localite,
+                #         'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                #     })
 
-                    self.save_in_csv()
+                #     self.save_in_csv()
+                pass
             #fin reflexion 09 01 2026
 
             self.set_history_index(self.log_file['last_index_url_scraped'])
@@ -328,7 +329,7 @@ class resa_scraper(object):
                         print('Button found but not clickable, recheck.')
                         time.sleep(uniform(0.5,1.5))
                         self.recheck = True
-            except: 
+            except:
                 print('Button not found, recheck')
                 self.recheck = True
     
