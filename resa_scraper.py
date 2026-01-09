@@ -12,7 +12,7 @@ from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-#08 01 2026
+#09 01 2026
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 
@@ -224,7 +224,6 @@ class resa_scraper(object):
                 #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
                 check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file) #retourne un bool pour disponibilité ou pas
                 data_receive_eloha = self.extract_in_eloha(check_dispo) #reçoit un dict, peut être vide si pas de disponibilité
-
                 self.data_container.append({
                     'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
                     'checkin' : datas[index_dest]['checkin'],
@@ -240,6 +239,7 @@ class resa_scraper(object):
                 #fin reflexion 07 01 2026
 
             else: #si par chance les typologies réapparaissent kkk
+                #09 01 2026 mettre pass car on ne va pas utiliser les infos du resanc meme si il y en a
                 for offre in offres_chambres_dispo:
                     try:
                         typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
@@ -294,18 +294,19 @@ class resa_scraper(object):
             self.set_history_index(self.log_file['last_index_url_scraped'])
             time.sleep(randint(2,4))
     
-    #08 01 2026
+    #09 01 2026
     def close_cookies(self,):
         while self.recheck:
             try:
                 self.driver.find_element(By.XPATH, '/html/body/div[8]/div[3]/button[1]').click() #full xpath amzay tsy mila id class fa miova le anaran ireo fa rehefa full dia ilay element no
                 print('Cookies closed')
                 self.recheck = False
+                break #09 01 2026
                 time.sleep(uniform(0.4,0.9))
             except:
                 print('No cookies popup')
     
-    #08 01 2026
+    #09 01 2026
     def go_to_eloha_website(self,):
         self.recheck = True #car a été mis False dans le close cookies
         while self.recheck:
@@ -321,6 +322,7 @@ class resa_scraper(object):
                         button_to_eloha.click()
                         print('Button clicked')
                         self.recheck = False
+                        break #09 01 2026
                         time.sleep(4)
                     except:
                         print('Button found but not clickable, recheck.')
@@ -330,7 +332,7 @@ class resa_scraper(object):
                 print('Button not found, recheck')
                 self.recheck = True
     
-    #08 01 2026
+    #09 01 2026
     def open_filter_popup_in_eloha(self):
         # print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
         if len(self.driver.window_handles) > 1:
@@ -392,36 +394,60 @@ class resa_scraper(object):
         #button rechercher après avoir filtrer
         go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
         go_filter_button.click()
-        time.sleep(uniform(1.5,2.8))
+        print('filtre cliqué')
+        WebDriverWait(self.driver, randint(3,5))
 
         #resultat de la recherche , tadidio tsara fa raha xx/xx/xxxx no format izany hoe 4 chiffres ilay année dia %Y en grand Y ilay année sinon erreur
         try:
-            check_dispo = self.driver.find_element(By.XPATH, "//div[contains(., 'Aucune disponibilité')]") #xpath no afaka hanaovana an'izao
-            print(f'Pas de disponibilité pour cet établissement pour la date {checkin} jusqu\'au {datetime.strptime(checkin,"%d/%m/%Y") + timedelta(days=int(checkout))}')
-            return False #on utilisera ce bool comme check_dispo dans extract_eloha
-        except NoSuchElementException: #tsy hitany io element misy "Aucune disponibilité io"
-            print(f'Cet établissement est disponible pour la date {checkin} jusqu\'au {datetime.strptime(checkin,"%d/%m/%Y") + timedelta(days=int(checkout))}')
-            return True
+            self.driver.find_element(
+                By.XPATH,
+                "//div[contains(text(), 'Aucune disponibilité')]"
+            )
+            print(
+                f"Pas de disponibilité pour cet établissement pour la date {checkin} "
+                f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+            )
+            return False
+
+        except NoSuchElementException:
+            try:
+                self.driver.find_element(
+                    By.XPATH,
+                    "//div[contains(text(), \"L'établissement n'est pas disponible\")]"
+                )
+                print(
+                    f"Pas de disponibilité pour cet établissement pour la date {checkin} "
+                    f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+                )
+                return False
+
+            except NoSuchElementException:
+                print(
+                    f"Cet établissement est disponible pour la date {checkin} "
+                    f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+                )
+                return True
     
     def extract_in_eloha(self, check_dispo : bool) -> list:
         data_in_eloha = {}
         #la devise
-        try:
-            list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
-            list_currency.click()
-            print('Menu currency clicked')
-            time.sleep(1.3)
-        except:
-            input('Currency menu not clicked')
+        # try:
+        #     list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
+        #     list_currency.click()
+        #     print('Menu currency clicked')
+        #     time.sleep(1.3)
+        # except:
+        #     input('Currency menu not clicked')
 
-        try:
-            select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='EUR']")
-            select_currency.click()
-            print('EURO clicked')
-            currency = "EUR"
-            time.sleep(2.1) #chargement
-        except:
-            input('Currency menu not clicked')
+        # try:
+        #     select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='EUR']")
+        #     select_currency.click()
+        #     print('EURO clicked')
+        #     currency = "EUR"
+        #     time.sleep(2.1) #chargement
+        # except:
+        #     input('Currency menu not clicked')
+        currency = "EUR" #efa euro foana raha ny hitako amle site eloha
         
         #selecteur price, topology, name, locality, currency
         #aleo ny name sy locality alaina ary amle site resa.nc fa prix ihany no ato
