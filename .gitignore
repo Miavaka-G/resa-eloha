@@ -1,0 +1,10 @@
+__pycache__/
+dests/
+error_logs/
+profiles/
+results/
+log_init/
+incomplete/
+logs/
+*.pyc
+.env

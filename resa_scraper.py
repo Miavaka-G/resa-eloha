@@ -1,0 +1,473 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime, timedelta
+import time 
+from random import randint, uniform
+from pathlib import Path
+import os, csv, json
+from webdriver_manager.chrome import ChromeDriverManager #miasa rehefa sur serveur
+from selenium.webdriver.chrome.service import Service
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+#08 01 2026
+from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import NoSuchElementException
+
+load_dotenv()
+
+OUTPUT_LOGS_PATH = os.getenv('OUTPUT_LOGS_PATH')
+OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
+OUTPUT_RESULTS_PATH = os.getenv('OUTPUT_RESULTS_PATH')
+OUTPUT_PATH_INCOMPLETE = os.getenv('OUTPUT_PATH_INCOMPLETE')
+
+FIELD_NAMES = [
+                'date_price',
+                'checkin', 
+                'checkout',
+                'price',
+                'currency',
+                'typology',
+                'name',
+                'locality',
+                'week_number',
+            ]
+
+class resa_scraper(object):
+    def __init__(self, destination : str, name : str, week_scrap : str):
+        self.week_scrap = datetime.strptime(week_scrap, '%d/%m/%Y')
+        self.name_of_file_output = name
+        self.name_of_folder_output = f'/{week_scrap}'
+        self.name_of_destination_file = destination
+
+        self.chrome_options = webdriver.ChromeOptions()
+        self.chrome_options.add_argument("--no-image")
+        self.chrome_options.add_argument('--ignore-certificate-errors')
+        self.chrome_options.add_argument('--disable-gpu')
+        self.chrome_options.add_argument('--incognito')
+        self.chrome_options.add_argument("--no-sandbox") 
+        self.chrome_options.add_argument("--disable-dev-shm-usage")
+        self.chrome_options.add_argument("--log-level=3") 
+        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        self.chrome_options.add_argument("--headless=new")
+
+        self.data_container = []
+        self.count_url_no_price = 0
+        self.recheck = True
+
+
+    def checkin_log_file(self) -> dict:
+        self.log_output_path = f'{OUTPUT_LOGS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
+        self.log_file_name = f'{self.log_output_path}log_{self.name_of_file_output}.json'
+        if not os.path.exists(self.log_output_path):
+            os.makedirs(self.log_output_path)
+            print('                 ')
+            print('Dossier de logs créé. Création du fichier de log')
+        elif not os.path.exists(self.log_file_name) and os.path.exists(self.log_output_path):
+            log = {"last_index_url_scraped":0, "week_scrap":self.week_scrap.strftime("%d/%m/%Y")}
+            with open(self.log_file_name, 'w', encoding='utf-8') as log_file:
+                json.dump(log, log_file, ensure_ascii=False, indent=4)
+            print('Fichier de log créé.')
+            with open(self.log_file_name, 'r', encoding='utf-8') as log_file:
+                return json.load(log_file)
+        else:
+            with open(self.log_file_name, 'r', encoding='utf-8') as log_file:
+                return json.load(log_file)
+
+    def update_log_file(self, log_file : dict):
+        try:
+            #tokony ity 05 01 2025
+            if os.path.exists(self.log_file_name):
+                log = {"last_index_url_scraped":log_file['last_index_url_scraped'], "week_scrap":log_file['week_scrap']}
+                with open(self.log_file_name, 'w', encoding='utf-8') as log_file:
+                    json.dump(log, log_file, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print("                ")
+            print(f'Erreur lors de la mise à jour du fichier de log: {e}, stopper, vérifier et relancer ')
+            input("                ")
+        
+    def load_destination_file(self) -> list:
+        output_path_dest = f'{OUTPUT_PATH_DEST}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
+        dest_file_name = f'{output_path_dest}{self.name_of_destination_file}.json'
+        try:
+            with open(dest_file_name, 'r', encoding='utf-8') as dest_file:
+                urls = json.load(dest_file)
+            print('Fichier de destination chargé.')
+            print('                  ')
+            return urls
+        except Exception as e:
+            print("                ")
+            input(f'Erreur lors du chargement du fichier de destination: {e},stopper, vérifier le fichier et relancer ')
+
+    def goto_resa_page(self, url: str):
+        self.driver = webdriver.Chrome(options=self.chrome_options)
+        self.driver.maximize_window()
+        self.driver.get(url)
+        time.sleep(randint(2,4))
+
+    def save_in_csv(self):
+        output_path_results = f'{OUTPUT_RESULTS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
+        results_file_name = f'{output_path_results}{self.name_of_file_output}.csv'
+        #créer si le sossier n'existe pas
+        if not os.path.exists(output_path_results):
+            os.makedirs(output_path_results)
+            print('Dossier de résultats créé.')
+        if not os.path.exists(results_file_name):
+            try:
+                with open(results_file_name, 'a', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=FIELD_NAMES)
+                    writer.writeheader()
+                    writer.writerows(self.data_container)
+                    print('Save successful.')
+            except Exception as e:
+                print("                ")
+                input(f'Erreur lors de la création du fichier de résultats: {e}, stopper, vérifier et relancer ')
+        else:
+            try:
+                with open(results_file_name, 'a', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=FIELD_NAMES)
+                    writer.writerows(self.data_container)
+                # print('Données ajoutées au fichier de résultats existant.')
+                # print('                 ')
+            except Exception as e:
+                print("                ")
+                input(f'Erreur lors de l\'ajout des données au fichier de résultats: {e}, stopper, vérifier et relancer ')
+
+        #vider la variable data_container après chaque sauvegarde
+        self.data_container = []
+
+    def save_url_incomplete_data(self, url_data : dict):
+        output_path_incomplete = f'{OUTPUT_PATH_INCOMPLETE}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
+        incomplete_file_name = f'{output_path_incomplete}incomplete_{self.name_of_file_output}.json'
+        #créer si le sossier n'existe pas
+        if not os.path.exists(output_path_incomplete):
+            os.makedirs(output_path_incomplete)
+        try:
+            if os.path.exists(incomplete_file_name):
+                #si le fichier existe déjà, on ajoute les nouvelles données à la suite
+                with open(incomplete_file_name, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+                #ajout dees nouvelles données en forme de liste de dictionnaire (amzay tsy manisy crochet manuel otran edomizil)
+                existing_data.append(url_data)
+                #écriture des données mises à jour dans le fichier
+                with open(incomplete_file_name, 'w', encoding='utf-8') as f:
+                    json.dump(existing_data, f, ensure_ascii=False, indent=4)
+            else:
+                with open(incomplete_file_name, 'w', encoding='utf-8') as f:
+                    json.dump([url_data], f, ensure_ascii=False, indent=4)
+            
+        except Exception as e:
+            print("                ")
+            print(f'Erreur lors de la sauvegarde des URL avec données incomplètes: {e}, stopper, vérifier et relancer ')
+            input("                ")
+
+    def get_history_index(self) -> None:
+        self.log_file = self.checkin_log_file()
+        # input(self.log_file)
+        # return int(self.log_file['last_index_url_scraped'])
+
+    def set_history_index(self, index : int):
+        # log_file = self.checkin_log_file()
+        # log_file['last_index_url_scraped'] = index
+        self.log_file['last_index_url_scraped'] = index + 1
+        self.update_log_file(self.log_file)
+
+    def extract_data(self, datas : list):
+        print('                 ')
+        print('Extraction des données')
+        #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
+        for index_dest in range(self.log_file["last_index_url_scraped"], len(datas)):
+            #on lit le dest puis à la fin de chaque itération de notre boucle, on mettra à jour le fichier de log 
+            #rehefa tsy vakiana à chaque itération le log_file dia tsy poinsa, mila mjery solution hoe tsy hamakiana azy nefa mba tsy hinana memoire
+            # log_file = self.checkin_log_file()
+            
+            # time.sleep(randint(3,4)) #jerena aloha ny momban'ity rehefa avy eo satria manao erreur am voalohany raha tonga dia oampisaiana eo amle print
+
+            print(f'Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
+            self.goto_resa_page(datas[index_dest]["url"])
+
+            #extraction proprement dite 05 01 2026
+            soupe = BeautifulSoup(self.driver.page_source.encode('utf-8').decode('utf-8'), 'html.parser')
+
+            try:
+                container_offres = soupe.find('div', {'class':'bloc sit-tarifs'})
+                offres_chambres_dispo = container_offres.find_all('li', {'class':'item-row'})
+            except Exception as e:
+                input(' Le tag container n\'existe pas, check selecteur sur navigateur et relancer ')
+            
+            print(f'Nombre d\'offres trouvées: {len(offres_chambres_dispo)} pour l\' url {datas[index_dest]["url"]}')
+            if len(offres_chambres_dispo) == 0:
+                self.save_url_incomplete_data(datas[index_dest]['url'])
+                self.count_url_no_price += 1
+
+                #Reflexion le 07 01 2026 : mettre quand même les données incompletes dans le csv avec les autres données (checkin, checkout, date_price, week_number) mais sans price et typology
+                try:
+                    container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
+                except:
+                    input('Check selector, container name localite not found')
+                try:
+                    nom = container_name_localite.find('h1').text.strip()
+                except:
+                    input('Check selector, nom not found')
+                    pass
+                try:
+                    localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                except:
+                    input('Check selector, localite not found')
+
+                #Reflexion du 09 01 2026 , plusieurs des pages resanc aujourd'hui CE JOUR , n'affichent plus de typo ni de prix donc j'opte pour eloha
+                self.close_cookies()
+                self.go_to_eloha_website()
+                self.open_filter_popup_in_eloha()
+                #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
+                check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file) #retourne un bool pour disponibilité ou pas
+                data_receive_eloha = self.extract_in_eloha(check_dispo) #reçoit un dict, peut être vide si pas de disponibilité
+
+                self.data_container.append({
+                    'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                    'checkin' : datas[index_dest]['checkin'],
+                    'checkout' : datas[index_dest]['checkout'],
+                    'price' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
+                    'currency' : data_receive_eloha['currency'] if 'currency' in data_receive_eloha else 'undefined',
+                    'typology' : data_receive_eloha['typology'] if 'typology' in data_receive_eloha else 'undefined',
+                    'name' : nom,
+                    'locality' : localite,
+                    'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                })
+                self.save_in_csv()
+                #fin reflexion 07 01 2026
+
+            else: #si par chance les typologies réapparaissent kkk
+                for offre in offres_chambres_dispo:
+                    try:
+                        typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
+                        # input(f'Typology found: {typology}')
+                    except:
+                        input('Check selector, typology not found')
+                    try:
+                        #Demande du 06 01 2026 : récupérer la currency aussi
+                        price_with_currency = offre.find('span', {'class':'item-row__value sit-tarifs__offer-price'}).text.strip().replace(' ','')
+                        if 'XPF' in price_with_currency:
+                            price = price_with_currency.replace('XPF','')
+                            currency = 'XPF'
+                        elif ('EUR' or 'eur' or 'euro' or 'euros') in price_with_currency:
+                            price = price_with_currency.replace('EUR','').replace('eur','').replace('euro','').replace('euros','')
+                            currency = 'EUR'
+                        else:
+                            price = price_with_currency
+                        # input(f'Price found: {price_with_currency} / Price only: {price} / Currency only: {currency}')
+                    except:
+                        input('Check selector, price not found')
+                    try:
+                        container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
+                    except:
+                        input('Check selector, container name localite not found')
+                    try:
+                        nom = container_name_localite.find('h1').text.strip()
+                    except:
+                        input('Check selector, nom not found')
+                        pass
+                    try:
+                        localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                    except:
+                        input('Check selector, localite not found')        
+
+                    # input(f'Nom found: {nom} / Localite found: {localite} / Typology found: {typology} / Price found: {price}')
+
+                    self.data_container.append({
+                        'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                        'checkin' : datas[index_dest]['checkin'],
+                        'checkout' : datas[index_dest]['checkout'],
+                        'price' : price,
+                        'currency' : currency,
+                        'typology' : typology,
+                        'name' : nom,
+                        'locality' : localite,
+                        'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                    })
+
+                    self.save_in_csv()
+            #fin reflexion 09 01 2026
+
+            self.set_history_index(self.log_file['last_index_url_scraped'])
+            time.sleep(randint(2,4))
+    
+    #08 01 2026
+    def close_cookies(self,):
+        while self.recheck:
+            try:
+                self.driver.find_element(By.XPATH, '/html/body/div[8]/div[3]/button[1]').click() #full xpath amzay tsy mila id class fa miova le anaran ireo fa rehefa full dia ilay element no
+                print('Cookies closed')
+                self.recheck = False
+                time.sleep(uniform(0.4,0.9))
+            except:
+                print('No cookies popup')
+    
+    #08 01 2026
+    def go_to_eloha_website(self,):
+        self.recheck = True #car a été mis False dans le close cookies
+        while self.recheck:
+            try:
+                button_exist = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]'))
+                )
+                print('button_exist:', button_exist)
+                if button_exist:
+                    print('Button to eloha found')
+                    button_to_eloha = self.driver.find_element(By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]')
+                    try:
+                        button_to_eloha.click()
+                        print('Button clicked')
+                        self.recheck = False
+                        time.sleep(4)
+                    except:
+                        print('Button found but not clickable, recheck.')
+                        time.sleep(uniform(0.5,1.5))
+                        self.recheck = True
+            except: 
+                print('Button not found, recheck')
+                self.recheck = True
+    
+    #08 01 2026
+    def open_filter_popup_in_eloha(self):
+        # print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
+        if len(self.driver.window_handles) > 1:
+            # driver.switch_to.window(driver.window_handles[0])
+            # driver.close()
+            # print('first window closed')
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            print('Switched to the new window eloha website')
+            time.sleep(1)
+            #normalement nous sommes sur l'onglet voulu
+
+        try:
+            WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div/div[2]/button'))
+                # EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.new-main-resume  bg-primary w-100p with-pax > button[data-target="#SearchModal"]'))
+            )
+            button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
+            button_filtre_on_eloha.click()
+            print('Button eloha filtre clicked')
+        except:
+            input('Button eloha filtre not found')
+
+    def filter_eloha(self, checkin_date, name_file_dest_to_split) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
+        #on donne toujours un str dans un value en html
+        checkin = checkin_date
+        checkout = name_file_dest_to_split.split('t')[1] #ça va prendre la fréquence de jour de réservation
+        self.driver.execute_script(f"document.getElementById('StartDate').value='{checkin}';")
+
+        time.sleep(0.5)
+
+        #mamapiasa import hafa mihitsy selenium am select
+        select_checkout = Select(self.driver.find_elements(By.ID, 'Duration')[0]) #misy 2 ao anatin'ny page ao , raha full xpath = "/html/body/div[5]/div/div/div[2]/form/div/div[4]/div[1]/div[2]/div/select"
+        select_checkout.select_by_value(checkout)
+
+        #ilay nombre de personne aleo atao 1 foana aloha comme pour les scrap de maeva, sns, 2 no ao am resa eloha par defaut dia atao 1 , ahena tsindriaa ilay button
+        try:
+            change_nb_room_container = self.driver.find_elements(By.CSS_SELECTOR, 'span[class="input-group-btn nb-room"]')[0]
+            change_nb_room_container.find_element(By.TAG_NAME, 'button').click()
+            print('Mofidier cliqué')
+            time.sleep(0.5)
+            # change_nb_room = driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0]
+            try:
+                change_nb_room = self.driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0].get_attribute('value')
+                # print(f'nb personne actuel{change_nb_room}')
+                change_nb_room = int(change_nb_room)
+            except Exception as e:
+                print(f'Erreur check nb personnes => {e}')
+            if change_nb_room > 1:
+                try:
+                    button_to_substract = self.driver.find_elements(By.CSS_SELECTOR, 'button[class="bg-primary input-number-substract"]')[0] #il y en a 4 selecteur et le premier est ce dont on a besoin
+                    button_to_substract.click()
+                    print('Nb personne modifié')
+                except:
+                    input('Erreur soustraction nb personne')
+        except:
+            input('Modifié non cliqué')
+
+        time.sleep(1.5)
+        #button rechercher après avoir filtrer
+        go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
+        go_filter_button.click()
+        time.sleep(uniform(1.5,2.8))
+
+        #resultat de la recherche , tadidio tsara fa raha xx/xx/xxxx no format izany hoe 4 chiffres ilay année dia %Y en grand Y ilay année sinon erreur
+        try:
+            check_dispo = self.driver.find_element(By.XPATH, "//div[contains(., 'Aucune disponibilité')]") #xpath no afaka hanaovana an'izao
+            print(f'Pas de disponibilité pour cet établissement pour la date {checkin} jusqu\'au {datetime.strptime(checkin,"%d/%m/%Y") + timedelta(days=int(checkout))}')
+            return False #on utilisera ce bool comme check_dispo dans extract_eloha
+        except NoSuchElementException: #tsy hitany io element misy "Aucune disponibilité io"
+            print(f'Cet établissement est disponible pour la date {checkin} jusqu\'au {datetime.strptime(checkin,"%d/%m/%Y") + timedelta(days=int(checkout))}')
+            return True
+    
+    def extract_in_eloha(self, check_dispo : bool) -> list:
+        data_in_eloha = {}
+        #la devise
+        try:
+            list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
+            list_currency.click()
+            print('Menu currency clicked')
+            time.sleep(1.3)
+        except:
+            input('Currency menu not clicked')
+
+        try:
+            select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='EUR']")
+            select_currency.click()
+            print('EURO clicked')
+            currency = "EUR"
+            time.sleep(2.1) #chargement
+        except:
+            input('Currency menu not clicked')
+        
+        #selecteur price, topology, name, locality, currency
+        #aleo ny name sy locality alaina ary amle site resa.nc fa prix ihany no ato
+        if check_dispo:
+            try:
+                #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
+                big_container_offer = self.driver.find_element(By.CSS_SELECTOR, 'div[class="row offer rounded-box"]')
+                try:
+                    typology_name = big_container_offer.get_attribute('data-track-product-name')
+                    details_typology = big_container_offer.find_element(By.CLASS_NAME, 'bedding-resume').text
+                    details_typology = details_typology.replace(',',' ') #pour le csv
+                    typology = typology_name + " - " + details_typology
+                except:
+                    input('Selecteur typology not found')
+                try:
+                    price = big_container_offer.get_attribute('data-track-product-price') #en str avec virgule
+                    price = price.replace(',','.') #pour le csv
+                except:
+                    input('Selecteur price not found')
+                print(f"Typology = {typology} | Price = {price} | Currency = {currency}")
+
+                #ajout dans le dictionnaire, on va vider ce dict après
+                data_in_eloha['typology'] = typology
+                data_in_eloha['price'] = price
+                data_in_eloha['currency'] = currency
+
+                return data_in_eloha
+            except:
+                print('Selecteur container not found')
+        else:
+            #on retourne un dict , j'en ai besoin
+            return data_in_eloha
+
+    def execute(self):
+        print(' => Starting ResaNc scraper ')
+
+        print(' Step 1  ')
+        urls_and_dates = self.load_destination_file() #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
+
+        print(' Step 2  ')
+        print(' Chargement des logs ... ')
+        self.checkin_log_file()
+
+        print(' Step 3  ')
+        self.get_history_index()
+        self.extract_data(urls_and_dates)
+
+        print('                 ')
+        print(f' => ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
