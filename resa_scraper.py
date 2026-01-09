@@ -304,7 +304,7 @@ class resa_scraper(object):
                 break #09 01 2026
                 time.sleep(uniform(0.4,0.9))
             except:
-                print('No cookies popup')
+                pass
     
     #09 01 2026
     def go_to_eloha_website(self,):
