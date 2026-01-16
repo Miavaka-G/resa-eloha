@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
 OUTPUT_INIT_LOG = os.getenv('OUTPUT_LOG_INIT')
+SYSTEM = os.getenv('SYSTEM')
 
 class resa_initializer(object):
     def __init__(self, reservation : int, week_scrap : str, end_date_scrap : str):
@@ -50,7 +51,12 @@ class resa_initializer(object):
         
 
     def goto_resa_hebergement_page(self, url : str):
-        self.driver = webdriver.Chrome(options=self.chrome_options)
+        if SYSTEM == "windows":
+            #for windows
+            self.driver = webdriver.Chrome(options=self.chrome_options)
+        if SYSTEM == "linux":
+            #for linux
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)
         self.driver.maximize_window()
         time.sleep(uniform(0.5, 1.8))
         self.driver.get(url)
