@@ -125,6 +125,7 @@ class resa_scraper(object):
             input(f'Erreur lors du chargement du fichier de destination: {e},stopper, vérifier le fichier et relancer ')
 
     def goto_resa_page(self, url: str):
+        time.sleep(randint(2,4))
         if SYSTEM == "windows":
             #for windows
             self.driver = webdriver.Chrome(options=self.chrome_options)
@@ -563,7 +564,7 @@ class resa_scraper(object):
 
     def execute(self):
         print('> > > Starting ResaNc scraper ')
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              
         print(' Step 1  ')
         urls_and_dates = self.load_destination_file() #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
 
@@ -579,3 +580,5 @@ class resa_scraper(object):
         print(f'> > > ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
 
         time.sleep(2)
+
+        self.driver.quit()
