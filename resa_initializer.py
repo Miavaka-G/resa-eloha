@@ -18,6 +18,7 @@ load_dotenv()
 OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
 OUTPUT_INIT_LOG = os.getenv('OUTPUT_LOG_INIT')
 SYSTEM = os.getenv('SYSTEM')
+PROFILE_CHROME = os.getenv('PROFILE_CHROME')
 
 class resa_initializer(object):
     def __init__(self, reservation : int, week_scrap : str, end_date_scrap : str):
@@ -48,7 +49,12 @@ class resa_initializer(object):
         # self.chrome_options.add_argument("--headless=new") 
         self.chrome_options.add_argument("--log-level=3") 
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        
+
+        #pour le profil (à fin de stocker les cahes et cookies) #16 01 2026
+        # self.chrome_options.add_argument("--no-default-browser-check") # Évite la vérification du navigateur par défaut
+        # self.chrome_options.add_argument("--disable-sync")
+        # self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{self.reservation}")
+    
 
     def goto_resa_hebergement_page(self, url : str):
         if SYSTEM == "windows":

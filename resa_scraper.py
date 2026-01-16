@@ -23,6 +23,7 @@ OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
 OUTPUT_RESULTS_PATH = os.getenv('OUTPUT_RESULTS_PATH')
 OUTPUT_PATH_INCOMPLETE = os.getenv('OUTPUT_PATH_INCOMPLETE')
 SYSTEM = os.getenv("SYSTEM")
+PROFILE_CHROME = os.getenv('PROFILE_CHROME')
 
 # FIELD_NAMES = [
 #                 'date_price',
@@ -69,6 +70,11 @@ class resa_scraper(object):
         self.chrome_options.add_argument("--log-level=3") 
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
         # self.chrome_options.add_argument("--headless=new") #le clique vers eloha semble e pas marche si headless
+        
+        #pour le profil (à fin de stocker les cahes et cookies) #16 01 2026
+        # self.chrome_options.add_argument("--no-default-browser-check") # Évite la vérification du navigateur par défaut
+        # self.chrome_options.add_argument("--disable-sync")
+        # self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{self.name_of_file_output.replace('resanc_dest','')}")
 
         self.data_container = []
         self.count_url_no_price = 0
