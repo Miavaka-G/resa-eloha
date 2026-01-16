@@ -148,7 +148,7 @@ class resa_initializer(object):
                 print('             ')
                 time.sleep(2)
             print('             ')
-            print('Chargement terminé.')
+            print('Chargement des hébergements disponibles pour nos dates terminé.')
             print('             ')                
 
             #aleo atao anaty Soup fa indraindray miactualise ilay page (19 12 2025)
@@ -158,6 +158,7 @@ class resa_initializer(object):
             link_hebergements = link_hebergement_container.find('div', {'data-loading': 'Chargement en cours'}).find_all('a')
 
             print(f'Hebergements trouvés pour la date {chekin_dates.strftime("%d/%m/%Y")} au {checkout_dates.strftime("%d/%m/%Y")}: {len(link_hebergements)}')
+            print("                     ")
             for link in link_hebergements:
                 hebergement_url = link.get('href')
                 print(f'Hebergement found: {hebergement_url}')
@@ -238,3 +239,5 @@ class resa_initializer(object):
 
         print('                 ')
         print(f' => ResaNc Initializer Finished , on a extrait {self.count_url_extracted} URLs d\'hébergements disponibles ')
+
+        time.sleep(1.5)

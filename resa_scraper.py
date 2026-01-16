@@ -7,7 +7,7 @@ import time
 from random import randint, uniform
 from pathlib import Path
 import os, csv, json
-from webdriver_manager.chrome import ChromeDriverManager #miasa rehefa sur serveur
+from webdriver_manager.chrome import ChromeDriverManager #SUr serveur quand le chrome est MAJ
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -23,17 +23,33 @@ OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
 OUTPUT_RESULTS_PATH = os.getenv('OUTPUT_RESULTS_PATH')
 OUTPUT_PATH_INCOMPLETE = os.getenv('OUTPUT_PATH_INCOMPLETE')
 
-FIELD_NAMES = [
+# FIELD_NAMES = [
+#                 'date_price',
+#                 'checkin', 
+#                 'checkout',
+#                 'price',
+#                 'currency',
+#                 'typology',
+#                 'name',
+#                 'locality',
+#                 'week_number',
+#             ]
+#Normalisation avec les g2a 16 01 2026
+FIELD_NAMES = [ 
+                'web-scraper-order',
                 'date_price',
-                'checkin', 
-                'checkout',
-                'price',
-                'currency',
-                'typology',
-                'name',
-                'locality',
-                'week_number',
-            ]
+                'date_debut', 
+                'date_fin',
+                'prix_init',
+                'prix_actuel',
+                'typologie',
+                'n_offre',
+                'nom',
+                'localite',
+                'date_debut-jour',
+                'Nb semaines',
+                'currency'
+            ] 
 
 class resa_scraper(object):
     def __init__(self, destination : str, name : str, week_scrap : str):
@@ -94,7 +110,7 @@ class resa_scraper(object):
         try:
             with open(dest_file_name, 'r', encoding='utf-8') as dest_file:
                 urls = json.load(dest_file)
-            print('Fichier de destination chargé.')
+            print('> > > Fichier de destination chargé.')
             print('                  ')
             return urls
         except Exception as e:
@@ -120,6 +136,7 @@ class resa_scraper(object):
                     writer = csv.DictWriter(csvfile, fieldnames=FIELD_NAMES)
                     writer.writeheader()
                     writer.writerows(self.data_container)
+                    print("                 ")
                     print('Save successful.')
             except Exception as e:
                 print("                ")
@@ -131,6 +148,8 @@ class resa_scraper(object):
                     writer.writerows(self.data_container)
                 # print('Données ajoutées au fichier de résultats existant.')
                 # print('                 ')
+                print("                 ")
+                print('Save successful.')
             except Exception as e:
                 print("                ")
                 input(f'Erreur lors de l\'ajout des données au fichier de résultats: {e}, stopper, vérifier et relancer ')
@@ -138,7 +157,7 @@ class resa_scraper(object):
         #vider la variable data_container après chaque sauvegarde
         self.data_container = []
 
-    def save_url_incomplete_data(self, url_data : dict):
+    def save_url_incomplete_data_resanc(self, url_data : dict):
         output_path_incomplete = f'{OUTPUT_PATH_INCOMPLETE}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
         incomplete_file_name = f'{output_path_incomplete}incomplete_{self.name_of_file_output}.json'
         #créer si le sossier n'existe pas
@@ -176,7 +195,7 @@ class resa_scraper(object):
 
     def extract_data(self, datas : list):
         print('                 ')
-        print('Extraction des données')
+        print('> > > Extraction des données')
         #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
         for index_dest in range(self.log_file["last_index_url_scraped"], len(datas)):
             #on lit le dest puis à la fin de chaque itération de notre boucle, on mettra à jour le fichier de log 
@@ -185,24 +204,25 @@ class resa_scraper(object):
             
             # time.sleep(randint(3,4)) #jerena aloha ny momban'ity rehefa avy eo satria manao erreur am voalohany raha tonga dia oampisaiana eo amle print
 
-            print(f'Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
+            print(f'> > > Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
             self.goto_resa_page(datas[index_dest]["url"])
 
             #extraction proprement dite 05 01 2026
             soupe = BeautifulSoup(self.driver.page_source.encode('utf-8').decode('utf-8'), 'html.parser')
 
             try:
-                container_offres = soupe.find('div', {'class':'bloc sit-tarifs'})
+                container_offres = soupe.find('div', {'class':'bloc sit-tarifs'}) #existe meme si pas de typo et de prix sur eloha
                 offres_chambres_dispo = container_offres.find_all('li', {'class':'item-row'})
             except Exception as e:
                 input(' Le tag container n\'existe pas, check selecteur sur navigateur et relancer ')
             
-            print(f'Nombre d\'offres trouvées: {len(offres_chambres_dispo)} pour l\' url {datas[index_dest]["url"]}')
+            # print(f'Nombre d\'offres trouvées: {len(offres_chambres_dispo)} pour l\' url {datas[index_dest]["url"]}') PAs besoin car on ne prend plus dans resa.nc
             if len(offres_chambres_dispo) == 0:
-                self.save_url_incomplete_data(datas[index_dest]['url'])
+                self.save_url_incomplete_data_resanc(datas[index_dest]['url'])
                 self.count_url_no_price += 1
 
-                #Reflexion le 07 01 2026 : mettre quand même les données incompletes dans le csv avec les autres données (checkin, checkout, date_price, week_number) mais sans price et typology
+                #Reflexion le 07 01 2026 : mettre quand même les données incompletes dans le csv avec les autres données (checkin, checkout, date_price, week_number) mais sans price et typology)
+                #on predn les nom et locality dans resa et on complete les prix et typo dans eloha
                 try:
                     container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
                 except:
@@ -213,32 +233,42 @@ class resa_scraper(object):
                     input('Check selector, nom not found')
                     pass
                 try:
-                    localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                    # localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                    #si jamais on aura besoin de l'adresse complete (16 01 2026)
+                    localite = self.driver.find_element(By.CLASS_NAME, 'contact-adress__text').text.strip().replace(',','')
                 except:
                     input('Check selector, localite not found')
 
                 #Reflexion du 09 01 2026 , plusieurs des pages resanc aujourd'hui CE JOUR , n'affichent plus de typo ni de prix donc j'opte pour eloha
-                self.close_cookies()
-                self.go_to_eloha_website()
-                self.open_filter_popup_in_eloha()
-                #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
-                check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file) #retourne un bool pour disponibilité ou pas
-                data_receive_eloha = self.extract_in_eloha(check_dispo) #reçoit un dict, peut être vide si pas de disponibilité
-                self.data_container.append({
-                    'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
-                    'checkin' : datas[index_dest]['checkin'],
-                    'checkout' : datas[index_dest]['checkout'],
-                    'price' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
-                    'currency' : data_receive_eloha['currency'] if 'currency' in data_receive_eloha else 'undefined',
-                    'typology' : data_receive_eloha['typology'] if 'typology' in data_receive_eloha else 'undefined',
-                    'name' : nom,
-                    'locality' : localite,
-                    'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
-                })
-                self.save_in_csv()
+                # self.close_cookies()
+                self.go_to_eloha_website(nom)
+                #16 01 2025 : button go to eloha inexistant
+                if self.recheck == True:
+                    self.switch_window()
+                    self.open_filter_popup_in_eloha()
+                    #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
+                    check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file, nom) #retourne un bool pour disponibilité ou pas
+                    data_receive_eloha = self.extract_in_eloha(check_dispo) #reçoit un dict, peut être vide si pas de disponibilité
+                    #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
+                    self.data_container.append({
+                        'web-scraper-order': '',
+                        'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                        'date_debut' : datas[index_dest]['checkin'],
+                        'date_fin' : datas[index_dest]['checkout'],
+                        'prix_init' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
+                        'prix_actuel' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
+                        'currency' : data_receive_eloha['currency'] if 'currency' in data_receive_eloha else 'undefined',
+                        'typologie' : data_receive_eloha['typology'] if 'typology' in data_receive_eloha else 'undefined',
+                        'n_offre': '',
+                        'nom' : nom,
+                        'localite' : localite,
+                        'date_debut-jour': '',
+                        'Nb semaines' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                    })
+                    self.save_in_csv()
                 #fin reflexion 07 01 2026
 
-            else: #si par chance les typologies réapparaissent kkk
+            else: #si par chance les typologies réapparaissent sur resa.nc
                 #09 01 2026 mettre pass car on ne va pas utiliser les infos du resanc meme si il y en a
                 # for offre in offres_chambres_dispo:
                 #     try:
@@ -297,72 +327,103 @@ class resa_scraper(object):
     
     #09 01 2026
     def close_cookies(self,):
+        time.sleep(1)
         while self.recheck:
             try:
                 self.driver.find_element(By.XPATH, '/html/body/div[8]/div[3]/button[1]').click() #full xpath amzay tsy mila id class fa miova le anaran ireo fa rehefa full dia ilay element no
                 print('Cookies closed')
                 self.recheck = False
                 break #09 01 2026
-                time.sleep(uniform(0.4,0.9))
             except:
+                time.sleep(0.5)
+                print('recheck cookies')
                 pass
     
     #09 01 2026
-    def go_to_eloha_website(self,):
+    def go_to_eloha_website(self, etablissement):
         self.recheck = True #car a été mis False dans le close cookies
         while self.recheck:
             try:
-                button_exist = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]'))
+                #16 01 2026 : ce button go to eloha peut ne jamais exister (comme l'établissement Betikura), donc on ajoute une condition pour gérer
+                button_exist = WebDriverWait(self.driver, 8).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'span[class="title-reservation"]')) #button go eloha container, ça existe toujours si le site le propose
                 )
-                print('button_exist:', button_exist)
                 if button_exist:
-                    print('Button to eloha found')
+                    time.sleep(2) #pour être sûr que le button soit là
+                    # print('Button to eloha found')
                     button_to_eloha = self.driver.find_element(By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]')
+                    # print('button_exist_to_eloha:', button_exist)
                     try:
                         button_to_eloha.click()
-                        print('Button clicked')
-                        self.recheck = False
+                        time.sleep(randint(2,4))
+                        self.recheck = True #pour la suite du process cet non pour cette boucle, d'ailleur, on break
                         break #09 01 2026
-                        time.sleep(4)
                     except:
-                        print('Button found but not clickable, recheck.')
-                        time.sleep(uniform(0.5,1.5))
-                        self.recheck = True
+                        try:
+                            #16 01 2026
+                            time.sleep(2,4)
+                            button_to_eloha.click()
+                            time.sleep(randint(2,4))
+                            self.recheck = True #pour la suite du process cet non pour cette boucle, d'ailleur, on break
+                            break
+                        except:
+                            print('Button found but not clickable, recheck.')
+                            time.sleep(uniform(0.5,1.5))
+                            self.recheck = True
             except:
-                print('Button not found, recheck')
-                self.recheck = True
-    
-    #09 01 2026
-    def open_filter_popup_in_eloha(self):
+                print("                 ")
+                print(f'> > > {etablissement} ne possède pas de lien vers le site de réservation, break et saut.')
+                print("                 ")
+                self.recheck = False #pour la suite et no pour cette boucle
+                break
+    #16 01 2026 séparé de open filtre car besoin de relancer la fonction open parfois
+    def switch_window(self,):
         # print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
         if len(self.driver.window_handles) > 1:
             # driver.switch_to.window(driver.window_handles[0])
-            # driver.close()
-            # print('first window closed')
-            self.driver.switch_to.window(self.driver.window_handles[1])
-            print('Switched to the new window eloha website')
+            self.driver.close()
+            print('first windows closed ')
+            self.driver.switch_to.window(self.driver.window_handles[0])
+            print('> > > Switched to the new window eloha website')
             time.sleep(1)
             #normalement nous sommes sur l'onglet voulu
 
+    #09 01 2026
+    def open_filter_popup_in_eloha(self):
         try:
-            WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div/div[2]/button'))
-                # EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.new-main-resume  bg-primary w-100p with-pax > button[data-target="#SearchModal"]'))
-            )
+            #14 01 2026 un peu de time car il me semble trop rapide lors du monitoring sur navigateur
+            time.sleep(randint(2,4))
+            self.recheck = False
+            #16 01 2026
+            while self.recheck == False:
+                try:
+                    button_filter_exist = WebDriverWait(self.driver, 10).until(
+                        EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div/div[2]/button'))
+                        # EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.new-main-resume  bg-primary w-100p with-pax > button[data-target="#SearchModal"]'))
+                    )
+                    # input(f'valeur bouton filter exist => {button_filter_exist}')
+                    if button_filter_exist:
+                        break
+                except:
+                    print('Page non chargé, refresh')
+                    self.driver.refresh()
+
             button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
             button_filtre_on_eloha.click()
-            print('Button eloha filtre clicked')
-        except:
-            input('Button eloha filtre not found')
+            time.sleep(uniform(3.2,4.9))
+            # print('Button eloha filtre clicked')
+        except Exception as e:
+            print(f'Button eloha filtre not found, refresh current page -> {e}')
+            self.driver.refresh()
+            self.open_filter_popup_in_eloha()
 
-    def filter_eloha(self, checkin_date, name_file_dest_to_split) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
+    def filter_eloha(self, checkin_date, name_file_dest_to_split, etablissement) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
         #on donne toujours un str dans un value en html
         checkin = checkin_date
         checkout = name_file_dest_to_split.split('t')[1] #ça va prendre la fréquence de jour de réservation
         self.driver.execute_script(f"document.getElementById('StartDate').value='{checkin}';")
 
-        time.sleep(0.5)
+        time.sleep(uniform(2.4,3.5))
 
         #mamapiasa import hafa mihitsy selenium am select
         select_checkout = Select(self.driver.find_elements(By.ID, 'Duration')[0]) #misy 2 ao anatin'ny page ao , raha full xpath = "/html/body/div[5]/div/div/div[2]/form/div/div[4]/div[1]/div[2]/div/select"
@@ -372,20 +433,20 @@ class resa_scraper(object):
         try:
             change_nb_room_container = self.driver.find_elements(By.CSS_SELECTOR, 'span[class="input-group-btn nb-room"]')[0]
             change_nb_room_container.find_element(By.TAG_NAME, 'button').click()
-            print('Mofidier cliqué')
-            time.sleep(0.5)
+            # print('Mofidier cliqué')
+            time.sleep(randint(1,2))
             # change_nb_room = driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0]
             try:
                 change_nb_room = self.driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0].get_attribute('value')
                 # print(f'nb personne actuel{change_nb_room}')
                 change_nb_room = int(change_nb_room)
             except Exception as e:
-                print(f'Erreur check nb personnes => {e}')
+                input(f'Erreur check nb personnes => {e}')
             if change_nb_room > 1:
                 try:
                     button_to_substract = self.driver.find_elements(By.CSS_SELECTOR, 'button[class="bg-primary input-number-substract"]')[0] #il y en a 4 selecteur et le premier est ce dont on a besoin
                     button_to_substract.click()
-                    print('Nb personne modifié')
+                    # print('Nb personne modifié')
                 except:
                     input('Erreur soustraction nb personne')
         except:
@@ -395,8 +456,8 @@ class resa_scraper(object):
         #button rechercher après avoir filtrer
         go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
         go_filter_button.click()
-        print('filtre cliqué')
-        WebDriverWait(self.driver, randint(3,5))
+        # print('filtre cliqué')
+        time.sleep(randint(3,5))
 
         #resultat de la recherche , tadidio tsara fa raha xx/xx/xxxx no format izany hoe 4 chiffres ilay année dia %Y en grand Y ilay année sinon erreur
         try:
@@ -404,9 +465,10 @@ class resa_scraper(object):
                 By.XPATH,
                 "//div[contains(text(), 'Aucune disponibilité')]"
             )
+            print("                 ")
             print(
-                f"Pas de disponibilité pour cet établissement pour la date {checkin} "
-                f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+                f"Pas de disponibilité pour {etablissement} pour la date {checkin} "
+                f"jusqu'au {datetime.strftime(datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout)),'%d/%m/%Y')}"
             )
             return False
 
@@ -416,17 +478,20 @@ class resa_scraper(object):
                     By.XPATH,
                     "//div[contains(text(), \"L'établissement n'est pas disponible\")]"
                 )
+                print("                 ")
                 print(
-                    f"Pas de disponibilité pour cet établissement pour la date {checkin} "
-                    f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+                    f"Pas de disponibilité pour {etablissement} pour la date {checkin} "
+                    f"jusqu'au {datetime.strftime(datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout)),'%d/%m/%Y')}"
                 )
                 return False
 
             except NoSuchElementException:
+                print("                 ")
                 print(
-                    f"Cet établissement est disponible pour la date {checkin} "
-                    f"jusqu'au {datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout))}"
+                    f"{etablissement} est disponible pour la date {checkin} "
+                    f"jusqu'au {datetime.strftime(datetime.strptime(checkin, '%d/%m/%Y') + timedelta(days=int(checkout)),'%d/%m/%Y')}"
                 )
+                print("                 ")
                 return True
     
     def extract_in_eloha(self, check_dispo : bool) -> list:
@@ -448,7 +513,7 @@ class resa_scraper(object):
         #     time.sleep(2.1) #chargement
         # except:
         #     input('Currency menu not clicked')
-        currency = "EUR" #efa euro foana raha ny hitako amle site eloha
+        currency = "EUR" #sur ce site, d'apres ce que j'ai remarqué à chaque lancement , le currency est toujours en EUR
         
         #selecteur price, topology, name, locality, currency
         #aleo ny name sy locality alaina ary amle site resa.nc fa prix ihany no ato
@@ -456,6 +521,8 @@ class resa_scraper(object):
             try:
                 #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
                 big_container_offer = self.driver.find_element(By.CSS_SELECTOR, 'div[class="row offer rounded-box"]')
+                
+                #14 01 2026 : ajout scroll vers l'élément
                 try:
                     typology_name = big_container_offer.get_attribute('data-track-product-name')
                     details_typology = big_container_offer.find_element(By.CLASS_NAME, 'bedding-resume').text
@@ -468,7 +535,7 @@ class resa_scraper(object):
                     price = price.replace(',','.') #pour le csv
                 except:
                     input('Selecteur price not found')
-                print(f"Typology = {typology} | Price = {price} | Currency = {currency}")
+                print(f"> > > Typology = {typology} | Price = {price} | Currency = {currency} < < <")
 
                 #ajout dans le dictionnaire, on va vider ce dict après
                 data_in_eloha['typology'] = typology
@@ -483,13 +550,13 @@ class resa_scraper(object):
             return data_in_eloha
 
     def execute(self):
-        print(' => Starting ResaNc scraper ')
-
+        print('> > > Starting ResaNc scraper ')
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
         print(' Step 1  ')
         urls_and_dates = self.load_destination_file() #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
 
         print(' Step 2  ')
-        print(' Chargement des logs ... ')
+        print('> > > Chargement des logs ... ')
         self.checkin_log_file()
 
         print(' Step 3  ')
@@ -497,4 +564,6 @@ class resa_scraper(object):
         self.extract_data(urls_and_dates)
 
         print('                 ')
-        print(f' => ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
+        print(f'> > > ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
+
+        time.sleep(2)

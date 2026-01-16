@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 OUTPUT_RESULTS_PATH = os.getenv('OUTPUT_RESULTS_PATH')
 
+#16 01 2026 : normalisation des nom des headers avec g2a
 class resa_cleaner:
     def __init__(self, name: str, week_scrap: str):
         self.name = name
@@ -22,7 +23,7 @@ class resa_cleaner:
     def remove_duplicate(self,):
         print('- > Suppression des doublons')
         try:
-            self.df_results.drop_duplicates(inplace=True,subset=['checkin','checkout','price','currency','typology','name','locality','week_number'])
+            self.df_results.drop_duplicates(inplace=True,subset=['date_debut','date_fin','prix_init','prix_actuel','currency','typologie','nom','localite','Nb semaines'])
         except Exception as e:
             input(f"Erreur lors de la suppression des doublons : {e}, stopper et verifier le fichier de résultats.")
 
@@ -30,17 +31,17 @@ class resa_cleaner:
         print('- > Tri par le checkin date')
         try:
             #avant mila atao datetime ny checkin satria str izy izao
-            self.df_results['checkin'] = pd.to_datetime(self.df_results['checkin'], format='%d/%m/%Y')
-            self.df_results.sort_values(by=['checkin'], inplace=True)
+            self.df_results['date_debut'] = pd.to_datetime(self.df_results['date_debut'], format='%d/%m/%Y')
+            self.df_results.sort_values(by=['date_debut'], inplace=True)
             #averina amin'ny str indray ny checkin aorian'ny tri
-            self.df_results['checkin'] = self.df_results['checkin'].dt.strftime('%d/%m/%Y')
+            self.df_results['date_debut'] = self.df_results['date_debut'].dt.strftime('%d/%m/%Y')
         except Exception as e:
             input(f"Erreur lors du tri par le checkin date : {e}, stopper et verifier le fichier de résultats.")
 
     def remove_comma(self,):
         print('- > Suppression des virgules dans les champs texte')
         try:
-            cols = ['name','locality','typology','price']
+            cols = ['nom','localite','typologie','prix_init','prix_actuel']
             self.df_results[cols] = self.df_results[cols].apply(lambda col : col.astype(str).str.replace(',','', regex=False))
         except Exception as e:
             input(f"Erreur lors de la suppression des virgules dans les champs texte : {e}, stopper et verifier le fichier de résultats.")
@@ -48,7 +49,7 @@ class resa_cleaner:
     def remove_entries_with_undefined_values(self,):
         print('- > Suppression des lignes avec les valeurs UNDEFINED inscrites dans leur colonne')
         try:
-            self.df_results = self.df_results[self.df_results['price'] != 'undefined']
+            self.df_results = self.df_results[self.df_results['prix_init'] != 'undefined']
         except Exception as e:
             input(f"Erreur lors de la suppression des lignes avec les valeurs UNDEFINED inscrites dans leur colonne : {e}, stopper et verifier le fichier de résultats.")   
 
