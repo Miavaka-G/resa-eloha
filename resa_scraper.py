@@ -22,6 +22,7 @@ OUTPUT_LOGS_PATH = os.getenv('OUTPUT_LOGS_PATH')
 OUTPUT_PATH_DEST = os.getenv('OUTPUT_PATH_DEST')
 OUTPUT_RESULTS_PATH = os.getenv('OUTPUT_RESULTS_PATH')
 OUTPUT_PATH_INCOMPLETE = os.getenv('OUTPUT_PATH_INCOMPLETE')
+SYSTEM = os.getenv("SYSTEM")
 
 # FIELD_NAMES = [
 #                 'date_price',
@@ -118,7 +119,12 @@ class resa_scraper(object):
             input(f'Erreur lors du chargement du fichier de destination: {e},stopper, vérifier le fichier et relancer ')
 
     def goto_resa_page(self, url: str):
-        self.driver = webdriver.Chrome(options=self.chrome_options)
+        if SYSTEM == "windows":
+            #for windows
+            self.driver = webdriver.Chrome(options=self.chrome_options)
+        if SYSTEM == "linux":
+            #for linux
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)
         self.driver.maximize_window()
         self.driver.get(url)
         time.sleep(randint(2,4))
