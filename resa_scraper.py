@@ -66,7 +66,7 @@ class resa_scraper(object):
         self.chrome_options.add_argument('--disable-gpu')
         self.chrome_options.add_argument('--incognito')
         self.chrome_options.add_argument("--no-sandbox") 
-        self.chrome_options.add_argument("--disable-dev-shm-usage")
+        # self.chrome_options.add_argument("--disable-dev-shm-usage") commenté le 19 01 2025
         self.chrome_options.add_argument("--log-level=3") 
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
         # self.chrome_options.add_argument("--headless=new") #le clique vers eloha semble e pas marche si headless
