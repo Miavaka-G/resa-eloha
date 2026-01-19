@@ -75,7 +75,7 @@ class resa_scraper(object):
         # self.chrome_options.add_argument("--no-default-browser-check") # Évite la vérification du navigateur par défaut
         # self.chrome_options.add_argument("--disable-sync")
         profil = self.name_of_destination_file.replace('resanc_dest','')
-        input(f'profil => {profil}')
+        print(f'Dossier de profil utilisé pour cette instance => profil{profil}')
         self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{profil}")
 
         self.data_container = []
@@ -126,17 +126,17 @@ class resa_scraper(object):
             print("                ")
             input(f'Erreur lors du chargement du fichier de destination: {e},stopper, vérifier le fichier et relancer ')
 
-    def goto_resa_page(self, url: str):
-        time.sleep(randint(2,4))
+    def start_driver(self,): #19 01 2026 , utilise pour l'utilisation de profile car sinon chrome essayera de créer un driver à chaque boucle pour un profil, impossible
         if SYSTEM == "windows":
-            #for windows
             self.driver = webdriver.Chrome(options=self.chrome_options)
         if SYSTEM == "linux":
-            #for linux
             self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)
         self.driver.maximize_window()
+
+    def goto_resa_page(self, url: str):
+        time.sleep(randint(5,8))
         self.driver.get(url)
-        time.sleep(randint(2,4))
+        time.sleep(randint(3,5))
 
     def save_in_csv(self):
         output_path_results = f'{OUTPUT_RESULTS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
@@ -212,6 +212,10 @@ class resa_scraper(object):
         print('                 ')
         print('> > > Extraction des données')
         #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
+
+        #un seul driver pour toute la boucle 19 01 2026
+        self.start_driver()
+
         for index_dest in range(self.log_file["last_index_url_scraped"], len(datas)):
             #on lit le dest puis à la fin de chaque itération de notre boucle, on mettra à jour le fichier de log 
             #rehefa tsy vakiana à chaque itération le log_file dia tsy poinsa, mila mjery solution hoe tsy hamakiana azy nefa mba tsy hinana memoire
