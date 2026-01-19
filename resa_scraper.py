@@ -74,9 +74,9 @@ class resa_scraper(object):
         #pour le profil (à fin de stocker les cahes et cookies) #16 01 2026
         # self.chrome_options.add_argument("--no-default-browser-check") # Évite la vérification du navigateur par défaut
         # self.chrome_options.add_argument("--disable-sync")
-        profil = self.name_of_file_output.replace('resanc_dest','')
+        profil = self.name_of_destination_file.replace('resanc_dest','')
         input(f'profil => {profil}')
-        self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{self.name_of_file_output.replace('resanc_dest','')}")
+        self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{profil}")
 
         self.data_container = []
         self.count_url_no_price = 0
