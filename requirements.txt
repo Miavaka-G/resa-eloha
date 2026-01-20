@@ -2,3 +2,4 @@ beautifulsoup4
 python-dotenv
 selenium
 webdriver_manager
+pandas

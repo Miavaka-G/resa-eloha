@@ -252,9 +252,10 @@ class resa_scraper(object):
                     input('Check selector, nom not found')
                     pass
                 try:
-                    # localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
-                    #si jamais on aura besoin de l'adresse complete (16 01 2026)
-                    localite = self.driver.find_element(By.CLASS_NAME, 'contact-adress__text').text.strip().replace(',','')
+                    #remise pour seulement le NOM DE VILLE 20 01 2026 par demande de Nicolas
+                    localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+                    #si jamais on aura besoin de l'adresse complete (19 01 2026)
+                    # localite = self.driver.find_element(By.CLASS_NAME, 'contact-adress__text').text.strip().replace(',','')
                 except:
                     input('Check selector, localite not found')
 
