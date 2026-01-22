@@ -520,7 +520,7 @@ class resa_scraper(object):
                 soup = BeautifulSoup(self.driver.page_source, "lxml")
                 big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
             except Exception as e:
-                input('Selecteur big container offer not found, stop and check')
+                input(f'Selecteur big container offer not found -> {e}, stop and check')
             # input(f'ATO ANATY IF CHECK DISPO => {big_container_offer} ET container offer +> {len(container_offer)}')
             #MAJ pour 26 01 2026
             #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
