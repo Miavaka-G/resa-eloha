@@ -53,6 +53,15 @@ class resa_cleaner:
         except Exception as e:
             input(f"Erreur lors de la suppression des lignes avec les valeurs UNDEFINED inscrites dans leur colonne : {e}, stopper et verifier le fichier de résultats.")   
 
+    #21 01 2026 :prix en entier uniquement
+    def round_price_to_int(self,):
+        print('- > Arrondissement des prix float en int uniquement ')
+        try:
+            self.df_results['prix_init'] = self.df_results['prix_init'].astype(float).round().astype(int)
+            self.df_results['prix_actuel'] = self.df_results['prix_actuel'].astype(float).round().astype(int)
+        except Exception as e:
+            input(f'Erreur lors de l\'arrondissement des prix en entier')
+
     def save(self,):
         print('- > Sauvegarde du fichier nettoyé')
         try:
@@ -67,5 +76,6 @@ class resa_cleaner:
         self.remove_comma()
         self.remove_duplicate()
         self.sort()
+        self.round_price_to_int()
         self.save()
         print('----> Nettoyage terminé.')

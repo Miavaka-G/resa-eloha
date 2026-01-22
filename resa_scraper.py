@@ -161,8 +161,6 @@ class resa_scraper(object):
                 with open(results_file_name, 'a', newline='', encoding='utf-8') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=FIELD_NAMES)
                     writer.writerows(self.data_container)
-                # print('Données ajoutées au fichier de résultats existant.')
-                # print('                 ')
                 print("                 ")
                 print('Save successful.')
             except Exception as e:
@@ -199,12 +197,9 @@ class resa_scraper(object):
 
     def get_history_index(self) -> None:
         self.log_file = self.checkin_log_file()
-        # input(self.log_file)
-        # return int(self.log_file['last_index_url_scraped'])
 
     def set_history_index(self, index : int):
-        # log_file = self.checkin_log_file()
-        # log_file['last_index_url_scraped'] = index
+        
         self.log_file['last_index_url_scraped'] = index + 1
         self.update_log_file(self.log_file)
 
@@ -219,9 +214,6 @@ class resa_scraper(object):
         for index_dest in range(self.log_file["last_index_url_scraped"], len(datas)):
             #on lit le dest puis à la fin de chaque itération de notre boucle, on mettra à jour le fichier de log 
             #rehefa tsy vakiana à chaque itération le log_file dia tsy poinsa, mila mjery solution hoe tsy hamakiana azy nefa mba tsy hinana memoire
-            # log_file = self.checkin_log_file()
-            
-            # time.sleep(randint(3,4)) #jerena aloha ny momban'ity rehefa avy eo satria manao erreur am voalohany raha tonga dia oampisaiana eo amle print
 
             print(f'> > > Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
             self.goto_resa_page(datas[index_dest]["url"])
@@ -268,24 +260,9 @@ class resa_scraper(object):
                     self.open_filter_popup_in_eloha()
                     #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
                     check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file, nom) #retourne un bool pour disponibilité ou pas
-                    data_receive_eloha = self.extract_in_eloha(check_dispo) #reçoit un dict, peut être vide si pas de disponibilité
-                    #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
-                    self.data_container.append({
-                        'web-scraper-order': '',
-                        'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
-                        'date_debut' : datas[index_dest]['checkin'],
-                        'date_fin' : datas[index_dest]['checkout'],
-                        'prix_init' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
-                        'prix_actuel' : data_receive_eloha['price'] if 'price' in data_receive_eloha else 'undefined',
-                        'currency' : data_receive_eloha['currency'] if 'currency' in data_receive_eloha else 'undefined',
-                        'typologie' : data_receive_eloha['typology'] if 'typology' in data_receive_eloha else 'undefined',
-                        'n_offre': '',
-                        'nom' : nom,
-                        'localite' : localite,
-                        'date_debut-jour': '',
-                        'Nb semaines' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
-                    })
-                    self.save_in_csv()
+                    #21 01 2026
+                    self.extract_in_eloha(check_dispo, nom, localite, datas, index_dest) #tout se fera dans extract eloha car 21 01 2026 j'au=i aperçu d'autre typologie en ouvrant un établissement par hasard
+
                 #fin reflexion 07 01 2026
 
             else: #si par chance les typologies réapparaissent sur resa.nc
@@ -514,8 +491,8 @@ class resa_scraper(object):
                 print("                 ")
                 return True
     
-    def extract_in_eloha(self, check_dispo : bool) -> list:
-        data_in_eloha = {}
+    def extract_in_eloha(self, check_dispo : bool, nom, localite, datas, index_for_datas):
+        # data_in_eloha = {} PLUS BESOIN 21 01 2026
         #la devise
         # try:
         #     list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
@@ -536,38 +513,53 @@ class resa_scraper(object):
         currency = "EUR" #sur ce site, d'apres ce que j'ai remarqué à chaque lancement , le currency est toujours en EUR
         
         #selecteur price, topology, name, locality, currency
-        #aleo ny name sy locality alaina ary amle site resa.nc fa prix ihany no ato
         if check_dispo:
             try:
                 #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
-                big_container_offer = self.driver.find_element(By.CSS_SELECTOR, 'div[class="row offer rounded-box"]')
-                
-                #14 01 2026 : ajout scroll vers l'élément
+                #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
+                soup = BeautifulSoup(self.driver.page_source, "lxml")
+                big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
+            except:
+                input('Selecteur big container offer not found, stop and check')
+            # input(f'ATO ANATY IF CHECK DISPO => {big_container_offer} ET container offer +> {len(container_offer)}')
+            #MAJ pour 26 01 2026
+            #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
+            container_offer = big_container_offer.find_all('div', {'class' : 'offer'})
+            print(f'- > {len(container_offer)} typologie(s) trouvé(s) pour {nom} ')
+            for offer in container_offer:
+                attribut_of_offer = offer.attrs
+                # input(f'les attribut du div => {attribut_of_offer}')
                 try:
-                    typology_name = big_container_offer.get_attribute('data-track-product-name')
-                    details_typology = big_container_offer.find_element(By.CLASS_NAME, 'bedding-resume').text
+                    typology_name = attribut_of_offer['data-track-product-name']
+                    details_typology = offer.find('span', {'class' : 'bedding-resume'}).text
                     details_typology = details_typology.replace(',',' ') #pour le csv
                     typology = typology_name + " - " + details_typology
                 except:
                     input('Selecteur typology not found')
                 try:
-                    price = big_container_offer.get_attribute('data-track-product-price') #en str avec virgule
+                    price = attribut_of_offer['data-track-product-price'] #en str avec virgule
                     price = price.replace(',','.') #pour le csv
                 except:
                     input('Selecteur price not found')
-                print(f"> > > Typology = {typology} | Price = {price} | Currency = {currency} < < <")
+                print(f"> > > Name = {nom} Typology = {typology} | Price = {price} | Currency = {currency} < < <")
 
-                #ajout dans le dictionnaire, on va vider ce dict après
-                data_in_eloha['typology'] = typology
-                data_in_eloha['price'] = price
-                data_in_eloha['currency'] = currency
-
-                return data_in_eloha
-            except:
-                print('Selecteur container not found')
-        else:
-            #on retourne un dict , j'en ai besoin
-            return data_in_eloha
+                #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
+                self.data_container.append({
+                    'web-scraper-order': '',
+                    'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                    'date_debut' : datas[index_for_datas]['checkin'],
+                    'date_fin' : datas[index_for_datas]['checkout'],
+                    'prix_init' : price if  price else 'undefined',
+                    'prix_actuel' : price if price else 'undefined',
+                    'currency' : currency if currency else 'undefined',
+                    'typologie' : typology if typology else 'undefined',
+                    'n_offre': '',
+                    'nom' : nom,
+                    'localite' : localite,
+                    'date_debut-jour': '',
+                    'Nb semaines' : datetime.strptime(datas[index_for_datas]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                })
+                self.save_in_csv()
 
     def execute(self):
         print('> > > Starting ResaNc scraper ')
