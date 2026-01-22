@@ -517,7 +517,7 @@ class resa_scraper(object):
             try:
                 #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
                 #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
-                soup = BeautifulSoup(self.driver.page_source, "lxml")
+                soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
                 big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
             except Exception as e:
                 input(f'Selecteur big container offer not found -> {e}, stop and check')
