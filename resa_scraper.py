@@ -519,7 +519,7 @@ class resa_scraper(object):
                 #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
                 soup = BeautifulSoup(self.driver.page_source, "lxml")
                 big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
-            except:
+            except Exception as e:
                 input('Selecteur big container offer not found, stop and check')
             # input(f'ATO ANATY IF CHECK DISPO => {big_container_offer} ET container offer +> {len(container_offer)}')
             #MAJ pour 26 01 2026
