@@ -56,7 +56,7 @@ class resa_initializer(object):
         # self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{self.reservation}")
     
 
-    def goto_resa_hebergement_page(self, url : str):
+    def init_driver(self,):
         if SYSTEM == "windows":
             #for windows
             self.driver = webdriver.Chrome(options=self.chrome_options)
@@ -64,6 +64,8 @@ class resa_initializer(object):
             #for linux
             self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=self.chrome_options)
         self.driver.maximize_window()
+        
+    def goto_resa_hebergement_page(self, url : str):
         time.sleep(uniform(0.5, 1.8))
         self.driver.get(url)
         time.sleep(randint(2,4))
@@ -144,6 +146,9 @@ class resa_initializer(object):
 
         chekin_dates = datetime.strptime(check_log['last_checkin_date'], '%d/%m/%y')
         checkout_dates = datetime.strptime(check_log['last_checkout_date'], '%d/%m/%y')
+
+        #23 01 2026 pour alléger le serveur avec les instances de driver car si c'est dans la boucle ça passera pas longtemps surtout sur linux
+        self.init_driver()
 
         for day in range(date_space_scrap): #on laisse tel quel, date space scrap mais lorsque c'est coupé ça sera changé par le log
             hebergement_dispo = self.put_params_url(self.url_base_hebergement, chekin_dates.strftime("%d/%m/%Y"), checkout_dates.strftime("%d/%m/%Y"))
