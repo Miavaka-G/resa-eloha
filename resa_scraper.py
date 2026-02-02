@@ -492,25 +492,23 @@ class resa_scraper(object):
                 return True
     
     def extract_in_eloha(self, check_dispo : bool, nom, localite, datas, index_for_datas):
-        # data_in_eloha = {} PLUS BESOIN 21 01 2026
         #la devise
-        # try:
-        #     list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
-        #     list_currency.click()
-        #     print('Menu currency clicked')
-        #     time.sleep(1.3)
-        # except:
-        #     input('Currency menu not clicked')
+        try:
+            list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
+            list_currency.click()
+            print('Menu currency clicked')
+            time.sleep(1.3)
+        except:
+            input('Currency menu not clicked')
 
-        # try:
-        #     select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='EUR']")
-        #     select_currency.click()
-        #     print('EURO clicked')
-        #     currency = "EUR"
-        #     time.sleep(2.1) #chargement
-        # except:
-        #     input('Currency menu not clicked')
-        currency = "EUR" #sur ce site, d'apres ce que j'ai remarqué à chaque lancement , le currency est toujours en EUR
+        try:
+            select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='XPF']") #demande 02 02 2026 19h50
+            select_currency.click()
+            print('XPF clicked')
+            currency = "XPF"
+            time.sleep(2.1) #chargement
+        except:
+            input('Currency menu not clicked')
         
         #selecteur price, topology, name, locality, currency
         if check_dispo:
