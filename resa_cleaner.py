@@ -65,7 +65,7 @@ class resa_cleaner:
     def save(self,):
         print('- > Sauvegarde du fichier nettoyé')
         try:
-            self.df_results.to_csv(f"{OUTPUT_RESULTS_PATH}{self.week_scrap.replace('/','_')}/{self.name}_cleaned.csv", index=False)
+            self.df_results.to_csv(f"{OUTPUT_RESULTS_PATH}{self.week_scrap.replace('/','_')}/{self.name}_cleaned_{self.week_scrap.replace('/','_')}.csv", index=False)
         except Exception as e:
             input(f"Erreur lors de la sauvegarde du fichier nettoyé : {e}, stopper et verifier le chemin et le nom du fichier.")
 
