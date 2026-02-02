@@ -39,6 +39,9 @@ class resa_initializer(object):
 
         self.count_url_extracted = 1
 
+        #02 02 2026 : all hebergement container
+        self.all_hebergements = []
+
         self.chrome_options = webdriver.ChromeOptions()
         self.chrome_options.add_argument("--no-image")
         self.chrome_options.add_argument('--ignore-certificate-errors')
@@ -93,9 +96,9 @@ class resa_initializer(object):
                 
             #noombre d'url sauvegardé
             self.count_url_extracted += 1
-            print('                ')
-            print(f'url numéro {self.count_url_extracted}')
-            print('                ')
+            # print('                ')
+            # print(f'url numéro {self.count_url_extracted}')
+            # print('                ')
             
             self.dest_by_date = [] #on vide la liste après chaque sauvegarde
         except Exception as e:
@@ -118,7 +121,7 @@ class resa_initializer(object):
 
         return f"{url}?{urlencode(params_to_put)}"
 
-    def check_hebergement_disponibility_by_date(self): #MAJ 08 01 2026 pour insérer le log d'initialisation
+    def check_hebergements(self): #MAJ 08 01 2026 pour insérer le log d'initialisation
         if self.reservation in [1,3,7]:
             #si le log est = au nombre de date self.nb_day_remaining, on démarre le l'initialisation depuis le début en prenant les paramètres de date via la ligne de commande
             check_log_init = self.load_log_file()
@@ -126,12 +129,16 @@ class resa_initializer(object):
 
                 print('démarrage de l\'initialisation depuis le début')
 
-                self.extract_url_by_hebergement_disponible(check_log_init)
+                # self.extract_url_by_hebergement_disponible_by_date(check_log_init)
+                #02 02 2026 : pour extraire tous les hébergements existants
+                self.extract_all_hebergements(check_log_init)
 
             elif check_log_init['days_remaining'] < self.nb_day_remaining:
                 print('Reprise de l\'initialisation depuis la coupure')
 
-                self.extract_url_by_hebergement_disponible(check_log_init)
+                # self.extract_url_by_hebergement_disponible_by_date(check_log_init)
+                #02 02 2026 : pour extraire tous les hébergements existants
+                self.extract_all_hebergements(check_log_init)
 
             time.sleep(uniform(1.5,2.2))
         else:
@@ -139,7 +146,7 @@ class resa_initializer(object):
             self.driver.quit()
 
     #08 01 2026
-    def extract_url_by_hebergement_disponible(self, check_log):
+    def extract_url_by_hebergement_disponible_by_date(self, check_log):
         #Méthode d'extraction proprement
         date_space_scrap = check_log['days_remaining']
         print(f'Reste de jours jusqu\'à la dernière date de scraping: {date_space_scrap} days')
@@ -200,6 +207,41 @@ class resa_initializer(object):
 
             #vider le parser
             soup.decompose()
+    
+    #02 02 2026
+    def extract_all_hebergements(self, check_log):
+        #Méthode d'extraction proprement
+        date_space_scrap = check_log['days_remaining']
+        print(f'Reste de jours jusqu\'à la dernière date de scraping: {date_space_scrap} days')
+
+        chekin_dates = datetime.strptime(check_log['last_checkin_date'], '%d/%m/%y')
+        checkout_dates = datetime.strptime(check_log['last_checkout_date'], '%d/%m/%y')
+
+        #23 01 2026 pour alléger le serveur avec les instances de driver car si c'est dans la boucle ça passera pas longtemps surtout sur linux
+        self.init_driver()
+
+        all_url_hebergements = self.extract_url_for_all_hebergement_exist()
+
+        for day in range(date_space_scrap): #on laisse tel quel, date space scrap mais lorsque c'est coupé ça sera changé par le log
+            for url in all_url_hebergements:
+                self.dest_by_date.append({
+                    'checkin' : chekin_dates.strftime("%d/%m/%Y"),
+                    'checkout' : checkout_dates.strftime("%d/%m/%Y"),
+                    'url' : url
+                })
+                # input(f'Donnée reçu => {self.dest_by_date}')
+
+                #on sauvegarde à chaque itération pour éviter de tout perdre en cas de problème et aussi pour alléger la mémoire
+                self.save()
+
+            #incrémentation des dates de checkin et checkout pour la prochaine itération
+            chekin_dates += timedelta(days=1)
+            checkout_dates += timedelta(days=1)
+
+            #mise à jour du fichier de log d'initialisation
+            check_log['days_remaining'] -= 1
+            # input(f'Nouvel espace de date à scraper => {check_log["days_remaining"]} days')
+            self.update_init_log_file(check_log['days_remaining'], chekin_dates.strftime('%d/%m/%y'), checkout_dates.strftime('%d/%m/%y'))
 
     #08 01 2026
     def load_log_file(self) -> dict: #on peut passer un dictionnaire vide pour initialiser le log
@@ -237,9 +279,47 @@ class resa_initializer(object):
             input('                ')
             
         
-    def extract_url_for_all_hebergement_exist(self):
+    def extract_url_for_all_hebergement_exist(self,) -> list:
         #rehefa isauv an'ity dia asio ny date nanaovana azy, amin'izay hita hoe firy no isan'ny hebergement misy amin'ilay jour nanaovana extract all
-        pass
+        self.driver.get(self.url_base_hebergement)
+        #02 02 2026 : on utilise ça maintenant car on check les disponibilités sur eloha maintenant
+        #attente de chargement des hébergements, ça prend du temps
+        print('             ')
+        print('attente du chargement des hébergements disponibles...')
+        print('             ')
+        time.sleep(randint(1,4))
+        while self.driver.find_elements(By.CSS_SELECTOR,'p[class="chargement-en-cours"]'):
+            print('             ')
+            print('Toujours en cours de chargement...')
+            print('             ')
+            time.sleep(2)
+        print('             ')
+        print('Chargement des hébergements disponibles pour nos dates terminé.')
+        print('             ') 
+
+        try:
+            div_container_hebergements = self.driver.find_element(By.CSS_SELECTOR, 'div[data-loading="Chargement en cours"]')
+            soup_container_hebergements = BeautifulSoup(div_container_hebergements.get_attribute('innerHTML'), 'lxml')
+            container = True
+        except Exception as e:
+            input(f'Container de tous les hébergements non trouvé: {e}, Stopper et Vérifier le selecteur puis relancer le programme.')
+            container = False
+        
+        self.driver.quit()
+        
+        if container:
+            link_hebergements = soup_container_hebergements.find_all('a')
+            print('                ')
+            print(f'On a {len(link_hebergements)} hébergements existants sur ResaNc.')
+            print('                  ')
+            for link in link_hebergements:
+                hebergement_url = link.get('href')
+                self.all_hebergements.append(hebergement_url)
+                
+            # input(f'Voici tous les hébergements existants extraits: {self.all_hebergements}')
+            return self.all_hebergements
+        else:
+            input('Stopper et relancer le programme après vérification du selecteur.')
 
     def execute(self):
         print(' => Starting ResaNc Initializer ')
@@ -251,8 +331,9 @@ class resa_initializer(object):
         print(' Step 1 - Load log file ')
         self.load_log_file()
 
-        print(' Step 2 - Check des hébergements disponibles par date (params url) et sauvegarde')
-        self.check_hebergement_disponibility_by_date()
+        # print(' Step 2 - Check des hébergements disponibles par date (params url) et sauvegarde')
+        print(' Step 2 - Check des hébergements sur Resanc et sauvegarde')
+        self.check_hebergements()
 
         print('                 ')
         print(f' => ResaNc Initializer Finished , on a extrait {self.count_url_extracted} URLs d\'hébergements disponibles ')
