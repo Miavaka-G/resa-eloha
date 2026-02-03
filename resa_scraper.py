@@ -523,7 +523,7 @@ class resa_scraper(object):
                 # print(f'big_container---> {big_container_offer}')
 
                 #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
-                if big_container_offer is None:
+                if big_container_offer == None:
                     #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
                     no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
                     if no_reservable != None:
