@@ -1,3 +1,4 @@
+import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -81,7 +82,8 @@ class resa_scraper(object):
         self.data_container = []
         self.count_url_no_price = 0
         self.recheck = True
-
+        #03 02 2026 : utiliser pour checker le container d'offre car parfois il n'existe pas si pas de réservation dispo à une date pour une fréquence donnée
+        self.check_big_container = True
 
     def checkin_log_file(self) -> dict:
         self.log_output_path = f'{OUTPUT_LOGS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
@@ -517,47 +519,62 @@ class resa_scraper(object):
                 #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
                 soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
                 big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
+
+                # print(f'big_container---> {big_container_offer}')
+
+                #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
+                if big_container_offer is None:
+                    #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
+                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                    if no_reservable != None:
+                        print('         ')
+                        print(f'{no_reservable.text} pour {nom} ')
+                        print('         ')
+                        self.check_big_container = False
+                    else:
+                        input('Big container offer not found , stop and check')
             except Exception as e:
                 input(f'Selecteur big container offer not found -> {e}, stop and check')
             # input(f'ATO ANATY IF CHECK DISPO => {big_container_offer} ET container offer +> {len(container_offer)}')
-            #MAJ pour 26 01 2026
-            #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
-            container_offer = big_container_offer.find_all('div', {'class' : 'offer'})
-            print(f'- > {len(container_offer)} typologie(s) trouvé(s) pour {nom} ')
-            for offer in container_offer:
-                attribut_of_offer = offer.attrs
-                # input(f'les attribut du div => {attribut_of_offer}')
-                try:
-                    typology_name = attribut_of_offer['data-track-product-name']
-                    details_typology = offer.find('span', {'class' : 'bedding-resume'}).text
-                    details_typology = details_typology.replace(',',' ') #pour le csv
-                    typology = typology_name + " - " + details_typology
-                except:
-                    input('Selecteur typology not found')
-                try:
-                    price = attribut_of_offer['data-track-product-price'] #en str avec virgule
-                    price = price.replace(',','.') #pour le csv
-                except:
-                    input('Selecteur price not found')
-                print(f"> > > Name = {nom} Typology = {typology} | Price = {price} | Currency = {currency} < < <")
+            if self.check_big_container == True:
+                #MAJ pour 26 01 2026
+                #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
+                container_offer = big_container_offer.find_all('div', {'class' : 'offer'})
+                print(f'- > {len(container_offer)} typologie(s) trouvé(s) pour {nom} ')
+                for offer in container_offer:
+                    attribut_of_offer = offer.attrs
+                    # input(f'les attribut du div => {attribut_of_offer}')
+                    try:
+                        typology_name = attribut_of_offer['data-track-product-name']
+                        details_typology = offer.find('span', {'class' : 'bedding-resume'}).text
+                        details_typology = details_typology.replace(',',' ') #pour le csv
+                        typology = typology_name + " - " + details_typology
+                    except:
+                        input('Selecteur typology not found')
+                    try:
+                        price = attribut_of_offer['data-track-product-price'] #en str avec virgule
+                        price = price.replace(',','.') #pour le csv
+                    except:
+                        input('Selecteur price not found')
+                    print(f"> > > Name = {nom} Typology = {typology} | Price = {price} | Currency = {currency} < < <")
 
-                #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
-                self.data_container.append({
-                    'web-scraper-order': '',
-                    'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
-                    'date_debut' : datas[index_for_datas]['checkin'],
-                    'date_fin' : datas[index_for_datas]['checkout'],
-                    'prix_init' : price if  price else 'undefined',
-                    'prix_actuel' : price if price else 'undefined',
-                    'currency' : currency if currency else 'undefined',
-                    'typologie' : typology if typology else 'undefined',
-                    'n_offre': '',
-                    'nom' : nom,
-                    'localite' : localite,
-                    'date_debut-jour': '',
-                    'Nb semaines' : datetime.strptime(datas[index_for_datas]['checkin'], '%d/%m/%Y').isocalendar()[1]
-                })
-                self.save_in_csv()
+                    #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
+                    self.data_container.append({
+                        'web-scraper-order': '',
+                        'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+                        'date_debut' : datas[index_for_datas]['checkin'],
+                        'date_fin' : datas[index_for_datas]['checkout'],
+                        'prix_init' : price if  price else 'undefined',
+                        'prix_actuel' : price if price else 'undefined',
+                        'currency' : currency if currency else 'undefined',
+                        'typologie' : typology if typology else 'undefined',
+                        'n_offre': '',
+                        'nom' : nom,
+                        'localite' : localite,
+                        'date_debut-jour': '',
+                        'Nb semaines' : datetime.strptime(datas[index_for_datas]['checkin'], '%d/%m/%Y').isocalendar()[1]
+                    })
+                    self.save_in_csv()
 
     def execute(self):
         print('> > > Starting ResaNc scraper ')
