@@ -62,6 +62,19 @@ class resa_cleaner:
         except Exception as e:
             input(f'Erreur lors de l\'arrondissement des prix en entier')
 
+    #03 02 2026 : conversion des prix EUR en XPF
+    def convert_price_eur_to_xpf(self,):
+        taux_conversion = 119.34 #1 EUR = 119.34 XPF environ d'apres quelques prix sur eloha
+        try:
+            self.df_results.loc[self.df_results['currency'] == 'EUR', 'prix_init'] *= taux_conversion
+            self.df_results.loc[self.df_results['currency'] == 'EUR', 'prix_actuel'] *= taux_conversion
+            self.df_results.loc[self.df_results['currency'] == 'EUR', 'currency'] = 'XPF'
+            self.df_results['prix_init'] = self.df_results['prix_init'].round().astype(int)
+            self.df_results['prix_actuel'] = self.df_results['prix_actuel'].round().astype(int)
+            print('- > Conversion des prix EUR en XPF effectuée sur les entrées ayant la currency EUR')
+        except Exception as e:
+            input(f'Erreur lors de la conversion des prix EUR en XPF : {e}, stopper et verifier le fichier de résultats.')
+
     def save(self,):
         print('- > Sauvegarde du fichier nettoyé')
         try:
@@ -77,5 +90,6 @@ class resa_cleaner:
         self.remove_duplicate()
         self.sort()
         self.round_price_to_int()
+        # self.convert_price_eur_to_xpf()
         self.save()
         print('----> Nettoyage terminé.')
