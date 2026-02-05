@@ -227,7 +227,16 @@ class resa_scraper(object):
                 container_offres = soupe.find('div', {'class':'bloc sit-tarifs'}) #existe meme si pas de typo et de prix sur eloha
                 offres_chambres_dispo = container_offres.find_all('li', {'class':'item-row'})
             except Exception as e:
-                input(' Le tag container n\'existe pas, check selecteur sur navigateur et relancer ')
+                #05 02 2026 : sur serveur , page introuvable rencontré pour un url, on va gérer ici car c'est ici que ça entre
+                check_page_introuvable = soupe.find("h1", string=re.compile("Page non trouvée", re.IGNORECASE))
+                if check_page_introuvable != None:
+                    print("                 ")
+                    print(f'********Page introuvable pour l\'url {datas[index_dest]["url"]}, skip et passer à la suivante')
+                    print("                 ")
+                    self.set_history_index(self.log_file['last_index_url_scraped'])
+                    continue
+                else:
+                    input(' Le tag container n\'existe pas, check selecteur sur navigateur et relancer ')
             
             # print(f'Nombre d\'offres trouvées: {len(offres_chambres_dispo)} pour l\' url {datas[index_dest]["url"]}') PAs besoin car on ne prend plus dans resa.nc
             if len(offres_chambres_dispo) == 0:
