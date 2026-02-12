@@ -415,6 +415,7 @@ class resa_scraper(object):
                 except:
                     print('Page non chargé, refresh')
                     self.driver.refresh()
+                    self.open_filter_popup_in_eloha() #12 02 2026 , oublié
 
             button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
             button_filtre_on_eloha.click()

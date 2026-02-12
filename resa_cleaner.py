@@ -89,7 +89,7 @@ class resa_cleaner:
         self.remove_comma()
         self.remove_duplicate()
         self.sort()
-        self.round_price_to_int()
+        # self.round_price_to_int()
         # self.convert_price_eur_to_xpf()
         self.save()
         print('----> Nettoyage terminé.')
