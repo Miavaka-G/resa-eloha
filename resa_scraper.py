@@ -62,7 +62,9 @@ class resa_scraper(object):
         self.name_of_destination_file = destination
 
         self.chrome_options = webdriver.ChromeOptions()
-        self.chrome_options.add_argument("--no-image")
+        #no image
+        pas_image = {"profile.managed_default_content_settings.images": 2}
+        self.chrome_options.add_experimental_option("prefs", pas_image)
         self.chrome_options.add_argument('--ignore-certificate-errors')
         self.chrome_options.add_argument('--disable-gpu')
         self.chrome_options.add_argument('--incognito')
