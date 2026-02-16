@@ -523,6 +523,12 @@ class resa_scraper(object):
             time.sleep(2.1) #chargement
         except:
             input('Currency menu not clicked')
+
+        #16 02 2026 : sur serveur , j'ai rencontré une page d'erreur de resanc qui dit "The custum error module does not recognize this error." et ça bloque le processus car il ne charge pas la page normalement , du coup je vais checker si ce message existe dans la page et si oui je refresh la page et je rajoute un sleep pour être sûr que ça charge bien après le refresh
+        if self.driver.find_element(By.TAG_NAME, 'body').text.strip() == 'The custum error module does not recognize this error.':
+            print('refresh de la page car error module does not recognize this error rencontré')
+            self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+            time.sleep(randint(2,3))
         
         #selecteur price, topology, name, locality, currency
         if check_dispo:
@@ -594,7 +600,8 @@ class resa_scraper(object):
         print('> > > Starting ResaNc scraper ')
                                                                                                                                                                                                                                                                                                                                                                                                                                                               
         print(' Step 1  ')
-        urls_and_dates = self.load_destination_file() #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
+        #self car j'en ai besoin dans le rappel dans la condition après menu currency cliekd si jamais la pafge ne charge pas
+        self.urls_and_dates = self.load_destination_file() #format de fichier liste de dictionnaire [{checkin : , checkout: , url: }]
 
         print(' Step 2  ')
         print('> > > Chargement des logs ... ')
@@ -602,7 +609,7 @@ class resa_scraper(object):
 
         print(' Step 3  ')
         self.get_history_index()
-        self.extract_data(urls_and_dates)
+        self.extract_data(self.urls_and_dates)
 
         print('                 ')
         print(f'> > > ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
