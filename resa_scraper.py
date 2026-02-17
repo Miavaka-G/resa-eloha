@@ -577,6 +577,7 @@ class resa_scraper(object):
                             #on recheck les variables car ils sont perdu d'après mes tests mais pas les selections sur la page
                             soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
                             big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
+                            input(f'APRES REFRESH , BIG CONTAINER OFFER = {big_container_offer}')
                             if big_container_offer is None:
                                 no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
                                 if no_reservable != None:
