@@ -551,7 +551,15 @@ class resa_scraper(object):
                         print('         ')
                         self.check_big_container = False
                     else:
-                        input('Big container offer not found , stop and check')
+                        print('Big container offer not found , refresh')
+                        #17 02 2026 : aussi ici il y a parfois un chargement interrompu
+                        try:
+                            #16 02 2026 : la page a besoin d'unn refresh 
+                            print('refresh de la page car error module does not recognize this error rencontré')
+                            self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                            time.sleep(randint(2,3))
+                        except:
+                            input('Big container offer not found 2nd time, stop and check')
                 elif big_container_offer:
                     self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
             except Exception as e:
