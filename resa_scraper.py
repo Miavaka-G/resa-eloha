@@ -522,13 +522,14 @@ class resa_scraper(object):
             currency = "XPF"
             time.sleep(2.1) #chargement
         except:
-            input('Currency menu not clicked')
-
-        #16 02 2026 : sur serveur , j'ai rencontré une page d'erreur de resanc qui dit "The custum error module does not recognize this error." et ça bloque le processus car il ne charge pas la page normalement , du coup je vais checker si ce message existe dans la page et si oui je refresh la page et je rajoute un sleep pour être sûr que ça charge bien après le refresh
-        if self.driver.find_element(By.TAG_NAME, 'body').text.strip() == 'The custum error module does not recognize this error.':
-            print('refresh de la page car error module does not recognize this error rencontré')
-            self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
-            time.sleep(randint(2,3))
+            try:
+                print('Currency menu not clicked, refresh')
+                #16 02 2026 : la page a besoin d'unn refresh 
+                print('refresh de la page car error module does not recognize this error rencontré')
+                self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                time.sleep(randint(2,3))
+            except:
+                input('Check the navigator, currency not clicked again 2nd time')
         
         #selecteur price, topology, name, locality, currency
         if check_dispo:
