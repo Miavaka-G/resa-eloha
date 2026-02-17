@@ -560,7 +560,11 @@ class resa_scraper(object):
                 #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
                 if big_container_offer is None:
                     #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
-                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                    #17 02 2026 :changement car une nouvel affichage à part ... la durée minimum
+                    try:
+                        no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                    except:
+                        no_reservable = soup.find("div", string=re.compile("L'établissement n'est pas disponible aux dates", re.IGNORECASE)) #trouvé le 17 02 2026
                     if no_reservable != None:
                         print('         ')
                         print(f'{no_reservable.text} pour {nom} ')
@@ -581,7 +585,10 @@ class resa_scraper(object):
                             big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
                             # input(f'APRES REFRESH , BIG CONTAINER OFFER = {big_container_offer}')
                             if big_container_offer is None:
-                                no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                                try:
+                                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                                except:
+                                    no_reservable = soup.find("div", string=re.compile("L'établissement n'est pas disponible aux dates", re.IGNORECASE)) #trouvé le 17 02 2026
                                 if no_reservable != None:
                                     print('         ')
                                     print(f'{no_reservable.text} pour {nom} ')
