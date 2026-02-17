@@ -273,8 +273,10 @@ class resa_scraper(object):
                     self.open_filter_popup_in_eloha()
                     #pour eloha on n'a besoin que du checkin car on selectionne le nombre de nuit par un select , on a besoin du -r ou bien on l'extrait du -d nom du dest
                     check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file, nom) #retourne un bool pour disponibilité ou pas
-                    #21 01 2026
-                    self.extract_in_eloha(check_dispo, nom, localite, datas, index_dest) #tout se fera dans extract eloha car 21 01 2026 j'au=i aperçu d'autre typologie en ouvrant un établissement par hasard
+                    #ce if le 17 02 2026
+                    if check_dispo == True:
+                        #21 01 2026
+                        self.extract_in_eloha(check_dispo, nom, localite, datas, index_dest) #tout se fera dans extract eloha car 21 01 2026 j'au=i aperçu d'autre typologie en ouvrant un établissement par hasard
 
                 #fin reflexion 07 01 2026
 
@@ -446,7 +448,7 @@ class resa_scraper(object):
             change_nb_room_container = self.driver.find_elements(By.CSS_SELECTOR, 'span[class="input-group-btn nb-room"]')[0]
             change_nb_room_container.find_element(By.TAG_NAME, 'button').click()
             # print('Mofidier cliqué')
-            time.sleep(randint(1,2))
+            time.sleep(uniform(2.4,3.5))
             # change_nb_room = driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0]
             try:
                 change_nb_room = self.driver.find_elements(By.CSS_SELECTOR, 'input[name="AdultNumber0"]')[0].get_attribute('value')
@@ -459,17 +461,18 @@ class resa_scraper(object):
                     button_to_substract = self.driver.find_elements(By.CSS_SELECTOR, 'button[class="bg-primary input-number-substract"]')[0] #il y en a 4 selecteur et le premier est ce dont on a besoin
                     button_to_substract.click()
                     # print('Nb personne modifié')
+                    time.sleep(uniform(1.1,3.1))
                 except:
                     input('Erreur soustraction nb personne')
         except:
             input('Modifié non cliqué')
 
-        time.sleep(1.5)
+        time.sleep(uniform(1.1,2.1))
         #button rechercher après avoir filtrer
         go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
         go_filter_button.click()
         # print('filtre cliqué')
-        time.sleep(randint(3,5))
+        time.sleep(uniform(1.1,3.1))
 
         #resultat de la recherche , tadidio tsara fa raha xx/xx/xxxx no format izany hoe 4 chiffres ilay année dia %Y en grand Y ilay année sinon erreur
         try:
@@ -512,7 +515,7 @@ class resa_scraper(object):
             list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
             list_currency.click()
             print('Menu currency clicked')
-            time.sleep(1.3)
+            time.sleep(uniform(1.1,2.1))
         except:
             print('Currency menu not clicked')
             #17 02 2026 : ici aussi 
@@ -521,11 +524,7 @@ class resa_scraper(object):
                 #16 02 2026 : la page a besoin d'unn refresh 
                 print('refresh de la page car error module does not recognize this error rencontré')
                 self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
-                try:
-                    self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                except Exception as e:
-                    input(f'Erreur de rappel de self.extract_in_eloha > > > {e}')
-                time.sleep(randint(2,3))
+                time.sleep(uniform(2.1,2.5))
             except:
                 input('Check the navigator, Currency menu not clicked again 2nd time')
 
@@ -534,14 +533,14 @@ class resa_scraper(object):
             select_currency.click()
             print('XPF clicked')
             currency = "XPF"
-            time.sleep(2.1) #chargement
+            time.sleep(uniform(1.1,2.1)) #chargement
         except:
             try:
                 print('XPF non enregistré, refresh')
                 #16 02 2026 : la page a besoin d'unn refresh 
                 print('refresh de la page car error module does not recognize this error rencontré')
                 self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
-                time.sleep(randint(2,3))
+                time.sleep(uniform(2.1,2.5))
                 currency = "XPF"
                 print('XPF enregistré')
             except:
@@ -561,43 +560,14 @@ class resa_scraper(object):
                 if big_container_offer is None:
                     #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
                     #17 02 2026 :changement car une nouvel affichage à part ... la durée minimum
-                    try:
-                        no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
-                    except:
-                        no_reservable = soup.find("div", string=re.compile("L'établissement n'est pas disponible aux dates", re.IGNORECASE)) #trouvé le 17 02 2026
+                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
                     if no_reservable != None:
                         print('         ')
                         print(f'{no_reservable.text} pour {nom} ')
                         print('         ')
                         self.check_big_container = False
                     else:
-                        print('Big container offer not found , refresh')
-                        #17 02 2026 : aussi ici il y a parfois un chargement interrompu
-                        try:
-                            #16 02 2026 : la page a besoin d'unn refresh 
-                            print('refresh de la page car error module does not recognize this error rencontré')
-                            self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
-                            time.sleep(randint(2,3))
-                            self.driver.refresh()#une deuxième fois car parfois la deuxième fois ça marche
-                            time.sleep(randint(2,3))
-                            #on recheck les variables car ils sont perdu d'après mes tests mais pas les selections sur la page
-                            soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
-                            big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
-                            # input(f'APRES REFRESH , BIG CONTAINER OFFER = {big_container_offer}')
-                            if big_container_offer is None:
-                                try:
-                                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
-                                except:
-                                    no_reservable = soup.find("div", string=re.compile("L'établissement n'est pas disponible aux dates", re.IGNORECASE)) #trouvé le 17 02 2026
-                                if no_reservable != None:
-                                    print('         ')
-                                    print(f'{no_reservable.text} pour {nom} ')
-                                    print('         ')
-                                    self.check_big_container = False
-                            elif big_container_offer:
-                                self.check_big_container = True #même que celui d'en bas
-                        except:
-                            input('Big container offer not found 2nd time, stop and check')
+                        input('Big container offer not found')
                 elif big_container_offer:
                     self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
             except Exception as e:
