@@ -513,7 +513,20 @@ class resa_scraper(object):
             print('Menu currency clicked')
             time.sleep(1.3)
         except:
-            input('Currency menu not clicked')
+            print('Currency menu not clicked')
+            #17 02 2026 : ici aussi 
+            try:
+                print('Currency menu not clicked, refresh')
+                #16 02 2026 : la page a besoin d'unn refresh 
+                print('refresh de la page car error module does not recognize this error rencontré')
+                self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                try:
+                    self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
+                except Exception as e:
+                    input(f'Erreur de rappel de self.extract_in_eloha > > > {e}')
+                time.sleep(randint(2,3))
+            except:
+                input('Check the navigator, Currency menu not clicked again 2nd time')
 
         try:
             select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='XPF']") #demande 02 02 2026 19h50
@@ -523,11 +536,13 @@ class resa_scraper(object):
             time.sleep(2.1) #chargement
         except:
             try:
-                print('Currency menu not clicked, refresh')
+                print('XPF non enregistré, refresh')
                 #16 02 2026 : la page a besoin d'unn refresh 
                 print('refresh de la page car error module does not recognize this error rencontré')
                 self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
                 time.sleep(randint(2,3))
+                currency = "XPF"
+                print('XPF enregistré')
             except:
                 input('Check the navigator, currency not clicked again 2nd time')
         
@@ -558,6 +573,18 @@ class resa_scraper(object):
                             print('refresh de la page car error module does not recognize this error rencontré')
                             self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
                             time.sleep(randint(2,3))
+                            #on recheck les variables car ils sont perdu d'après mes tests mais pas les selections sur la page
+                            soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
+                            big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
+                            if big_container_offer is None:
+                                no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+                                if no_reservable != None:
+                                    print('         ')
+                                    print(f'{no_reservable.text} pour {nom} ')
+                                    print('         ')
+                                    self.check_big_container = False
+                            elif big_container_offer:
+                                self.check_big_container = True #même que celui d'en bas
                         except:
                             input('Big container offer not found 2nd time, stop and check')
                 elif big_container_offer:
