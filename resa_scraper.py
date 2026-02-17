@@ -362,10 +362,10 @@ class resa_scraper(object):
                     time.sleep(2) #pour être sûr que le button soit là
                     # print('Button to eloha found')
                     button_to_eloha = self.driver.find_element(By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]')
-                    # print('button_exist_to_eloha:', button_exist)
+                    print('button_exist_to_eloha: elle est selectionner')
                     try:
                         #17 02 2026 : changment en clique de JS car parfois celui de selenium direct ne fonctionne pas
-                        self.driver.execute("argument[0].click();",button_to_eloha)
+                        self.driver.execute_script("arguments[0].click();",button_to_eloha)
                         time.sleep(randint(2,4))
                         self.recheck = True #pour la suite du process cet non pour cette boucle, d'ailleur, on break
                         break #09 01 2026
@@ -373,7 +373,7 @@ class resa_scraper(object):
                         try:
                             #16 01 2026
                             time.sleep(2,4)
-                            self.driver.execute("argument[0].click();",button_to_eloha)
+                            self.driver.execute_script("arguments[0].click();",button_to_eloha)
                             time.sleep(randint(2,4))
                             self.recheck = True #pour la suite du process cet non pour cette boucle, d'ailleur, on break
                             break
