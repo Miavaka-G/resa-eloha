@@ -576,15 +576,14 @@ class resa_scraper(object):
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
                         # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                        # if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
+                        if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
                         # if self.count_refresh != 0:
-                        try:
                             self.driver.get(self.driver.current_url)
                             time.sleep(2)
                             # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
                             # self.count_refresh -= 1
                             return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                        except:
+                        else:
                             # self.count_refresh = 10
                             sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
                 elif big_container_offer:
@@ -593,14 +592,14 @@ class resa_scraper(object):
                 print(f'Selecteur big container offer not found -> {e}, CHECK')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                # if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
-                try:
+                if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
+                # if self.count_refresh != 0:
                     self.driver.get(self.driver.current_url)
                     time.sleep(2)
                     # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
                     # self.count_refresh -= 1
                     return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                except:
+                else:
                     # self.count_refresh = 10
                     sys.exit('STOP , CHECK NAVIGATEUR si non fermé')  
 
