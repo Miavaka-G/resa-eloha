@@ -87,6 +87,7 @@ class resa_scraper(object):
         self.recheck = True
         #03 02 2026 : utiliser pour checker le container d'offre car parfois il n'existe pas si pas de réservation dispo à une date pour une fréquence donnée
         self.check_big_container = True
+        self.count_refresh = 10
 
     def checkin_log_file(self) -> dict:
         self.log_output_path = f'{OUTPUT_LOGS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
@@ -428,7 +429,7 @@ class resa_scraper(object):
                         break
                 except:
                     print('Page non chargé, refresh')
-                    self.driver.refresh()
+                    self.driver.get(self.driver.current_url)
                     return self.open_filter_popup_in_eloha() #12 02 2026 , oublié
 
             button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
@@ -437,7 +438,7 @@ class resa_scraper(object):
             # print('Button eloha filtre clicked')
         except Exception as e:
             print(f'Button eloha filtre not found, refresh current page -> {e}')
-            self.driver.refresh()
+            self.driver.get(self.driver.current_url)
             return self.open_filter_popup_in_eloha()
 
     def filter_eloha(self, checkin_date, name_file_dest_to_split, etablissement) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
@@ -541,11 +542,11 @@ class resa_scraper(object):
                 print('Currency menu not clicked ou XPF not clicked, refresh')
                 #16 02 2026 : la page a besoin d'unn refresh 
                 print('refresh de la page car probablement => error module does not recognize this error rencontré')
-                self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                self.driver.get(self.driver.current_url) #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
                 time.sleep(1)
-                self.driver.refresh() #oui une deuxième fois
+                self.driver.get(self.driver.current_url) #oui une deuxième fois
                 time.sleep(uniform(2.1,2.5))
-                self.currency_choice()
+                return self.currency_choice()
             except:
                 print('XPF non enregistré encore, il se peut que XPF ne soit pas cliqué')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
@@ -575,14 +576,16 @@ class resa_scraper(object):
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
                         # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                        if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
-                            self.driver.refresh()
-                            time.sleep(1)
-                            self.driver.refresh()
-                            time.sleep(1)
+                        # if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
+                        # if self.count_refresh != 0:
+                        try:
+                            self.driver.get(self.driver.current_url)
+                            time.sleep(2)
                             # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
+                            # self.count_refresh -= 1
                             return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                        else:
+                        except:
+                            # self.count_refresh = 10
                             sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
                 elif big_container_offer:
                     self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
@@ -590,15 +593,16 @@ class resa_scraper(object):
                 print(f'Selecteur big container offer not found -> {e}, CHECK')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
-                    self.driver.refresh()
-                    time.sleep(1)
-                    self.driver.refresh()
-                    time.sleep(1)
-                    # input('Regarde le navigateur si les filtres sont tous OK après actualisation') Ok, testé
+                # if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
+                try:
+                    self.driver.get(self.driver.current_url)
+                    time.sleep(2)
+                    # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
+                    # self.count_refresh -= 1
                     return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                else:
-                    sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+                except:
+                    # self.count_refresh = 10
+                    sys.exit('STOP , CHECK NAVIGATEUR si non fermé')  
 
             #A partir d'ici safe, jamais eu de coupure, sauf selecteur changé
             if self.check_big_container == True:
