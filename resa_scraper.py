@@ -477,11 +477,15 @@ class resa_scraper(object):
             input('Modifié non cliqué')
 
         time.sleep(uniform(1.1,2.1))
-        #button rechercher après avoir filtrer
-        go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
-        go_filter_button.click()
-        # print('filtre cliqué')
-        time.sleep(uniform(1.1,3.1))
+        try:
+            #button rechercher après avoir filtrer
+            go_filter_button = self.driver.find_element(By.CSS_SELECTOR, 'input[value="RECHERCHER"]')
+            go_filter_button.click()
+            # print('filtre cliqué')
+            time.sleep(uniform(1.1,3.1))
+        except Exception as e:
+            input('Erreur de clique sur le go_filter_button, donc aucun filtre appliqué, CHECK')
+            sys.exit("Arret depuis go_gilter_button click dans filter eloha()")
 
         #resultat de la recherche , tadidio tsara fa raha xx/xx/xxxx no format izany hoe 4 chiffres ilay année dia %Y en grand Y ilay année sinon erreur
         try:
