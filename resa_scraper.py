@@ -12,6 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager #SUr serveur quand le c
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import sys
 
 #09 01 2026
 from selenium.webdriver.support.ui import Select
@@ -275,6 +276,8 @@ class resa_scraper(object):
                     check_dispo = self.filter_eloha(datas[index_dest]['checkin'], self.name_of_destination_file, nom) #retourne un bool pour disponibilité ou pas
                     #ce if le 17 02 2026
                     if check_dispo == True:
+                        #24 02 2026
+                        self.currency_choice()
                         #21 01 2026
                         self.extract_in_eloha(check_dispo, nom, localite, datas, index_dest) #tout se fera dans extract eloha car 21 01 2026 j'au=i aperçu d'autre typologie en ouvrant un établissement par hasard
 
@@ -393,12 +396,8 @@ class resa_scraper(object):
                 break
     #16 01 2026 séparé de open filtre car besoin de relancer la fonction open parfois
     def switch_window(self,):
-        print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
+        # print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
         if len(self.driver.window_handles) > 1:
-            # driver.switch_to.window(driver.window_handles[0])
-            # self.driver.close()
-            # print('first windows closed ')
-            # self.driver.switch_to.window(self.driver.window_handles[0])
             self.driver.switch_to.window(self.driver.window_handles[1])
             print('> > > Switched to the new window eloha website')
             time.sleep(randint(2,4))
@@ -519,43 +518,37 @@ class resa_scraper(object):
                 print("                 ")
                 return True
     
-    def extract_in_eloha(self, check_dispo : bool, nom, localite, datas, index_for_datas):
+    #24 02 2026 : séparer le check currency pour essayer de gérer les coupures not recognize
+    def currency_choice(self,):
         #la devise
         try:
             list_currency = self.driver.find_element(By.CSS_SELECTOR, "div.btn-currency div.dropdown")
             list_currency.click()
             print('Menu currency clicked')
-            time.sleep(uniform(1.1,2.1))
-        except:
-            print('Currency menu not clicked')
-            #17 02 2026 : ici aussi 
-            try:
-                print('Currency menu not clicked, refresh')
-                #16 02 2026 : la page a besoin d'unn refresh 
-                print('refresh de la page car error module does not recognize this error rencontré')
-                self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
-                time.sleep(uniform(2.1,2.5))
-            except:
-                input('Check the navigator, Currency menu not clicked again 2nd time')
-
-        try:
+            time.sleep(1.2)
             select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='XPF']") #demande 02 02 2026 19h50
             select_currency.click()
             print('XPF clicked')
             currency = "XPF"
-            time.sleep(uniform(1.1,2.1)) #chargement
+            time.sleep(uniform(2.1,3.2)) #chargement
         except:
+            #17 02 2026
             try:
-                print('XPF non enregistré, refresh')
+                print('Currency menu not clicked ou XPF not clicked, refresh')
                 #16 02 2026 : la page a besoin d'unn refresh 
-                print('refresh de la page car error module does not recognize this error rencontré')
+                print('refresh de la page car probablement => error module does not recognize this error rencontré')
                 self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                time.sleep(1)
+                self.driver.refresh() #oui une deuxième fois
                 time.sleep(uniform(2.1,2.5))
-                currency = "XPF"
-                print('XPF enregistré')
+                self.currency_choice()
             except:
-                input('Check the navigator, currency not clicked again 2nd time')
-        
+                print('XPF non enregistré encore, il se peut que XPF ne soit pas cliqué')
+                soup = BeautifulSoup(self.driver.page_source, "html.parser")
+                print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #là on voit mieux si c'est du module not recognize
+                sys.exit('STOP , CHECK NAVIGATEUR si non fermé')
+    
+    def extract_in_eloha(self, check_dispo : bool, nom, localite, datas, index_for_datas):
         #selecteur price, topology, name, locality, currency
         if check_dispo:
             try:
@@ -563,9 +556,6 @@ class resa_scraper(object):
                 #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
                 soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
                 big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
-
-                # print(f'big_container---> {big_container_offer}')
-
                 #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
                 if big_container_offer is None:
                     #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
@@ -577,12 +567,18 @@ class resa_scraper(object):
                         print('         ')
                         self.check_big_container = False
                     else:
-                        input('Big container offer not found')
+                        print(f'No reservable not found and == None => {no_reservable}')
+                        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+                        print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+                        sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
                 elif big_container_offer:
                     self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
             except Exception as e:
-                input(f'Selecteur big container offer not found -> {e}, stop and check')
-            # input(f'ATO ANATY IF CHECK DISPO => {big_container_offer} ET container offer +> {len(container_offer)}')
+                print(f'Selecteur big container offer not found -> {e}, CHECK')
+                soup = BeautifulSoup(self.driver.page_source, "html.parser")
+                print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+                sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+
             if self.check_big_container == True:
                 #MAJ pour 26 01 2026
                 #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
