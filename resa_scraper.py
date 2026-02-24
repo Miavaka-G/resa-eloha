@@ -567,6 +567,7 @@ class resa_scraper(object):
                         print('         ')
                         self.check_big_container = False
                     else:
+                        #le programme entre ici si big container a existé alors que no reservable est None , c'est impossible et c'est pour ça qu'on gère
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
                         print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
