@@ -580,7 +580,7 @@ class resa_scraper(object):
                             time.sleep(1)
                             self.driver.refresh()
                             time.sleep(1)
-                            input('Regarde le navigateur si les filtres sont tous OK après actualisation')
+                            # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé
                             self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                         else:
                             sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
@@ -595,7 +595,7 @@ class resa_scraper(object):
                     time.sleep(1)
                     self.driver.refresh()
                     time.sleep(1)
-                    input('Regarde le navigateur si les filtres sont tous OK après actualisation')
+                    # input('Regarde le navigateur si les filtres sont tous OK après actualisation') Ok, testé
                     self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                 else:
                     sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
