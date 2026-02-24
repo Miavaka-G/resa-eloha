@@ -529,7 +529,7 @@ class resa_scraper(object):
             select_currency = self.driver.find_element(By.CSS_SELECTOR, "ul.dropdown-menu-devise li[data-devise='XPF']") #demande 02 02 2026 19h50
             select_currency.click()
             print('XPF clicked')
-            currency = "XPF"
+            self.currency = "XPF"
             time.sleep(uniform(2.1,3.2)) #chargement
         except:
             #17 02 2026
@@ -599,7 +599,7 @@ class resa_scraper(object):
                         price = price.replace(',','.') #pour le csv
                     except:
                         input('Selecteur price not found')
-                    print(f"> > > Name = {nom} Typology = {typology} | Price = {price} | Currency = {currency} < < <")
+                    print(f"> > > Name = {nom} Typology = {typology} | Price = {price} | Currency = {self.currency} < < <")
 
                     #normalisation avec les g2a , donc on met meme les champs qui seront vides (par demande du 15 01 2026)
                     self.data_container.append({
@@ -609,7 +609,7 @@ class resa_scraper(object):
                         'date_fin' : datas[index_for_datas]['checkout'],
                         'prix_init' : price if  price else 'undefined',
                         'prix_actuel' : price if price else 'undefined',
-                        'currency' : currency if currency else 'undefined',
+                        'currency' : self.currency if self.currency else 'undefined',
                         'typologie' : typology if typology else 'undefined',
                         'n_offre': '',
                         'nom' : nom,
