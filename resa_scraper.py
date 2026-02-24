@@ -570,15 +570,32 @@ class resa_scraper(object):
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
                         print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                        sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+                        if soup.find("body").get_text(strip=True) == "The custum error module does not recognize this error.":
+                            self.driver.refresh()
+                            time.sleep(1)
+                            self.driver.refresh()
+                            time.sleep(1)
+                            input('Regarde le navigateur si les filtres sont tous OK après actualisation')
+                            self.extract_data(check_dispo, nom, localite, datas, index_for_datas)
+                        else:
+                            sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
                 elif big_container_offer:
                     self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
             except Exception as e:
                 print(f'Selecteur big container offer not found -> {e}, CHECK')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+                if soup.find("body").get_text(strip=True) == "The custum error module does not recognize this error.":
+                    self.driver.refresh()
+                    time.sleep(1)
+                    self.driver.refresh()
+                    time.sleep(1)
+                    input('Regarde le navigateur si les filtres sont tous OK après actualisation')
+                    self.extract_data(check_dispo, nom, localite, datas, index_for_datas)
+                else:
+                    sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
 
+            #A partir d'ici safe, jamais eu de coupure, sauf selecteur changé
             if self.check_big_container == True:
                 #MAJ pour 26 01 2026
                 #NB : le premier div est à exclure d'après ce que j'ai vu car c'est CHoisir qu'il y a dedans
