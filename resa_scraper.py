@@ -582,6 +582,7 @@ class resa_scraper(object):
                             time.sleep(2)
                             # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
                             # self.count_refresh -= 1
+                        if soup.find("body").get_text(strip=True) != "The custom error module does not recognize this error.":
                             return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                         else:
                             # self.count_refresh = 10
@@ -598,6 +599,7 @@ class resa_scraper(object):
                     time.sleep(2)
                     # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
                     # self.count_refresh -= 1
+                if soup.find("body").get_text(strip=True) != "The custom error module does not recognize this error.":
                     return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                 else:
                     # self.count_refresh = 10
