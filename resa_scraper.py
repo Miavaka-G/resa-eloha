@@ -571,7 +571,7 @@ class resa_scraper(object):
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
                         print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                        if soup.find("body").get_text(strip=True) == "The custum error module does not recognize this error.":
+                        if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
                             self.driver.refresh()
                             time.sleep(1)
                             self.driver.refresh()
@@ -586,7 +586,7 @@ class resa_scraper(object):
                 print(f'Selecteur big container offer not found -> {e}, CHECK')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                if soup.find("body").get_text(strip=True) == "The custum error module does not recognize this error.":
+                if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
                     self.driver.refresh()
                     time.sleep(1)
                     self.driver.refresh()
