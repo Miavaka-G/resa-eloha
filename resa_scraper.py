@@ -429,7 +429,7 @@ class resa_scraper(object):
                 except:
                     print('Page non chargé, refresh')
                     self.driver.refresh()
-                    self.open_filter_popup_in_eloha() #12 02 2026 , oublié
+                    return self.open_filter_popup_in_eloha() #12 02 2026 , oublié
 
             button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
             button_filtre_on_eloha.click()
@@ -438,7 +438,7 @@ class resa_scraper(object):
         except Exception as e:
             print(f'Button eloha filtre not found, refresh current page -> {e}')
             self.driver.refresh()
-            self.open_filter_popup_in_eloha()
+            return self.open_filter_popup_in_eloha()
 
     def filter_eloha(self, checkin_date, name_file_dest_to_split, etablissement) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
         #on donne toujours un str dans un value en html
@@ -580,8 +580,8 @@ class resa_scraper(object):
                             time.sleep(1)
                             self.driver.refresh()
                             time.sleep(1)
-                            # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé
-                            self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
+                            # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
+                            return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                         else:
                             sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
                 elif big_container_offer:
@@ -596,7 +596,7 @@ class resa_scraper(object):
                     self.driver.refresh()
                     time.sleep(1)
                     # input('Regarde le navigateur si les filtres sont tous OK après actualisation') Ok, testé
-                    self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
+                    return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
                 else:
                     sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
 
