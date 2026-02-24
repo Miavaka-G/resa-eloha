@@ -138,9 +138,9 @@ class resa_scraper(object):
         self.driver.maximize_window()
 
     def goto_resa_page(self, url: str):
-        time.sleep(randint(5,8))
+        time.sleep(randint(2,4))
         self.driver.get(url)
-        time.sleep(randint(3,5))
+        time.sleep(randint(1,2))
 
     def save_in_csv(self):
         output_path_results = f'{OUTPUT_RESULTS_PATH}{self.week_scrap.strftime("%d-%m-%Y").replace("-", "_")}/'
@@ -336,6 +336,9 @@ class resa_scraper(object):
 
             self.set_history_index(self.log_file['last_index_url_scraped'])
             time.sleep(randint(2,4))
+
+            #24 02 2026 : fermer l'onglet mère
+            self.close_old_windows_after_extract()
     
     #09 01 2026
     def close_cookies(self,):
@@ -364,7 +367,6 @@ class resa_scraper(object):
                     time.sleep(2) #pour être sûr que le button soit là
                     # print('Button to eloha found')
                     button_to_eloha = self.driver.find_element(By.CSS_SELECTOR, 'button[id="BtnLaunchBooking"]')
-                    print('button_exist_to_eloha: elle est selectionner')
                     try:
                         button_to_eloha.click()
                         time.sleep(randint(2,4))
@@ -391,21 +393,29 @@ class resa_scraper(object):
                 break
     #16 01 2026 séparé de open filtre car besoin de relancer la fonction open parfois
     def switch_window(self,):
-        # print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
+        print(f'liste des fenetres ouvertes => {self.driver.window_handles}')
         if len(self.driver.window_handles) > 1:
             # driver.switch_to.window(driver.window_handles[0])
-            self.driver.close()
-            print('first windows closed ')
-            self.driver.switch_to.window(self.driver.window_handles[0])
+            # self.driver.close()
+            # print('first windows closed ')
+            # self.driver.switch_to.window(self.driver.window_handles[0])
+            self.driver.switch_to.window(self.driver.window_handles[1])
             print('> > > Switched to the new window eloha website')
-            time.sleep(1)
+            time.sleep(randint(2,4))
             #normalement nous sommes sur l'onglet voulu
+    
+    #24 02 2026 : Ne fermer l'onglet mère qu'après l'extraction, peut être est ce la cause des not recognise parfois car je ferme trop rapidement
+    def close_old_windows_after_extract(self,):
+        if len(self.driver.window_handles) > 1:
+            self.driver.close()
+            time.sleep(randint(2,3))
+            self.driver.switch_to.window(self.driver.window_handles[0])
 
     #09 01 2026
     def open_filter_popup_in_eloha(self):
         try:
             #14 01 2026 un peu de time car il me semble trop rapide lors du monitoring sur navigateur
-            time.sleep(randint(2,4))
+            time.sleep(randint(4,6))
             self.recheck = False
             #16 01 2026
             while self.recheck == False:
