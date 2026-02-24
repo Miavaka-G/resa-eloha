@@ -556,54 +556,81 @@ class resa_scraper(object):
     def extract_in_eloha(self, check_dispo : bool, nom, localite, datas, index_for_datas):
         #selecteur price, topology, name, locality, currency
         if check_dispo:
-            try:
-                #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
-                #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
-                soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
-                big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
-                #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
-                if big_container_offer is None:
-                    #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
-                    #17 02 2026 :changement car une nouvel affichage à part ... la durée minimum
-                    no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
-                    if no_reservable != None:
-                        print('         ')
-                        print(f'{no_reservable.text} pour {nom} ')
-                        print('         ')
-                        self.check_big_container = False
-                    else:
-                        #le programme entre ici si big container a existé alors que no reservable est None , c'est impossible et c'est pour ça qu'on gère
-                        print(f'No reservable not found and == None => {no_reservable}')
-                        soup = BeautifulSoup(self.driver.page_source, "html.parser")
-                        # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                        if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
-                        # if self.count_refresh != 0:
-                            self.driver.get(self.driver.current_url)
-                            time.sleep(2)
-                            # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
-                            # self.count_refresh -= 1
-                        if soup.find("body").get_text(strip=True) != "The custom error module does not recognize this error.":
-                            return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                        else:
-                            # self.count_refresh = 10
-                            sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
-                elif big_container_offer:
-                    self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
-            except Exception as e:
-                print(f'Selecteur big container offer not found -> {e}, CHECK')
+            #commentée 24 02 2026
+            # try:
+            #     #misy div tonga dia manana ny info rehetra ilaina ato , milamina (misy data product id izany ary raha ilaina)
+            #     #MAJ pour semaine 26 01 2026 car en scrutant une page comme par hasard, une autre typologie est apparu pour une date donné donc on va gérer tout
+            #     soup = BeautifulSoup(self.driver.page_source, "html.parser") #lxml ne fonctionne pas sur serveur
+            #     big_container_offer = soup.find('div', {'class':'offer-list offer-list0 last m-top-30'})
+            #     #03 02 2026 : J'ai remarqué que big_container pouvait être None avec BS , ça veut dire que sur la page , il n'est pas présent
+            #     if big_container_offer is None:
+            #         #pour plus de précaution car avec BS si le selecteur n'existe pas , il met None, donc on va vérifier si la réservation est viable ou non réeellement
+            #         #17 02 2026 :changement car une nouvel affichage à part ... la durée minimum
+            #         no_reservable = soup.find("div", string=re.compile("la durée minimum", re.IGNORECASE)) #exemple de message : "la durée minimum pour réserver cet hébergement est de 3 nuits"
+            #         if no_reservable != None:
+            #             print('         ')
+            #             print(f'{no_reservable.text} pour {nom} ')
+            #             print('         ')
+            #             self.check_big_container = False
+            #         else:
+            #             #le programme entre ici si big container a existé alors que no reservable est None , c'est impossible et c'est pour ça qu'on gère
+            #             print(f'No reservable not found and == None => {no_reservable}')
+            #             soup = BeautifulSoup(self.driver.page_source, "html.parser")
+            #             while soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
+            #                 print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+            #                 print('refresh')
+            #                 self.driver.get(self.driver.current_url)
+            #                 time.sleep(2)
+            #             print('rappel de extract in eloha, car la vue est redevenue normalen, on peut poursuivre')
+            #             return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
+            #             # else:
+            #             #     # self.count_refresh = 10
+            #             #     sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+            #     elif big_container_offer:
+            #         self.check_big_container = True #je ne sais pas mais il faut le mettre en True meme si c'est déja mis en True par defaut
+            # except Exception as e:
+            #     print(f'Selecteur big container offer not found -> {e}, CHECK')
+            #     soup = BeautifulSoup(self.driver.page_source, "html.parser")
+            #     while soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
+            #         print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+            #         print('refresh')
+            #         self.driver.get(self.driver.current_url)
+            #         time.sleep(2)
+            #     print('rappel de extract in eloha, car la vue est redevenue normalen, on peut poursuivre')
+            #     return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
+            #     # else:
+            #     #     # self.count_refresh = 10
+            #     #     sys.exit('STOP , CHECK NAVIGATEUR si non fermé') 
+            #commenté 24 02 2026  
+            while True:
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
-                # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
-                if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
-                # if self.count_refresh != 0:
+
+                body_text = soup.find("body").get_text(strip=True)
+
+                if body_text == "The custom error module does not recognize this error.":
+                    print(f"Vue erreur détectée pour {nom}, refresh")
                     self.driver.get(self.driver.current_url)
                     time.sleep(2)
-                    # input('Regarde le navigateur si les filtres sont tous OK après actualisation') OK , testé , le return sert à fermer l'instance de la fonction actuelle sinon elle reviendra terminer l'actuel (sensation de boucle infini)
-                    # self.count_refresh -= 1
-                if soup.find("body").get_text(strip=True) != "The custom error module does not recognize this error.":
-                    return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
-                else:
-                    # self.count_refresh = 10
-                    sys.exit('STOP , CHECK NAVIGATEUR si non fermé')  
+                    continue   
+
+                big_container_offer = soup.find('div', {'class': 'offer-list offer-list0 last m-top-30'})
+
+                if big_container_offer is None: #c'est ce qui contient l'offre en temps normal , si c'est None, cela peut dire que la date de réservation inférieur à nos dates entrée ne peut pas être effctuée pour cet établissement
+                    no_reservable = soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE))
+
+                    if no_reservable != None:
+                        print(no_reservable.text, "pour", nom)
+                        self.check_big_container = False
+                    
+                    if no_reservable == None:
+                        print("No reservable non trouvé, pas normal, on refresh")
+                        self.driver.get(self.driver.current_url)
+                        time.sleep(2)
+                        continue
+
+                # si l'offre est bien visible
+                self.check_big_container = True
+                break
 
             #A partir d'ici safe, jamais eu de coupure, sauf selecteur changé
             if self.check_big_container == True:
