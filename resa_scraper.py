@@ -574,7 +574,7 @@ class resa_scraper(object):
                         #le programme entre ici si big container a existé alors que no reservable est None , c'est impossible et c'est pour ça qu'on gère
                         print(f'No reservable not found and == None => {no_reservable}')
                         soup = BeautifulSoup(self.driver.page_source, "html.parser")
-                        print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+                        # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
                         if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
                             self.driver.refresh()
                             time.sleep(1)
@@ -589,7 +589,7 @@ class resa_scraper(object):
             except Exception as e:
                 print(f'Selecteur big container offer not found -> {e}, CHECK')
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
-                print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
+                # print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
                 if soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error." or soup.find("body").get_text(strip=True):
                     self.driver.refresh()
                     time.sleep(1)
