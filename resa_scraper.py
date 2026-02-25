@@ -446,12 +446,15 @@ class resa_scraper(object):
         checkin = checkin_date
         checkout = name_file_dest_to_split.split('t')[1] #ça va prendre la fréquence de jour de réservation
         self.driver.execute_script(f"document.getElementById('StartDate').value='{checkin}';")
+        print(f'Date checkin {checkin} entrée avec succès ')
 
         time.sleep(uniform(2.4,3.5))
 
         #mamapiasa import hafa mihitsy selenium am select
         select_checkout = Select(self.driver.find_elements(By.ID, 'Duration')[0]) #misy 2 ao anatin'ny page ao , raha full xpath = "/html/body/div[5]/div/div/div[2]/form/div/div[4]/div[1]/div[2]/div/select"
         select_checkout.select_by_value(checkout)
+        print('         ')
+        print(f'Date checkout entrée avec succès ')
 
         #ilay nombre de personne aleo atao 1 foana aloha comme pour les scrap de maeva, sns, 2 no ao am resa eloha par defaut dia atao 1 , ahena tsindriaa ilay button
         try:
@@ -470,7 +473,7 @@ class resa_scraper(object):
                 try:
                     button_to_substract = self.driver.find_elements(By.CSS_SELECTOR, 'button[class="bg-primary input-number-substract"]')[0] #il y en a 4 selecteur et le premier est ce dont on a besoin
                     button_to_substract.click()
-                    # print('Nb personne modifié')
+                    print('Nb personne modifié')
                     time.sleep(uniform(1.1,3.1))
                 except:
                     input('Erreur soustraction nb personne')
@@ -492,7 +495,7 @@ class resa_scraper(object):
         try:
             self.driver.find_element(
                 By.XPATH,
-                "//div[contains(text(), 'Aucune disponibilité')]"
+                "//div[contains(., 'Aucune disponibilité')]" #. estplus flexible que text() si jamais il y a un span dans le div par exemple
             )
             print("                 ")
             print(
@@ -505,7 +508,7 @@ class resa_scraper(object):
             try:
                 self.driver.find_element(
                     By.XPATH,
-                    "//div[contains(text(), \"L'établissement n'est pas disponible\")]"
+                    "//div[contains(., \"L'établissement n'est pas disponible\")]"
                 )
                 print("                 ")
                 print(
@@ -627,8 +630,13 @@ class resa_scraper(object):
                     #     time.sleep(2)
                     #     continue
                 #25 02 2026 : normalement , c'est le cas où le selecteur est obsolète, car si le programme entre dedans et que la vue n'a plus de This custom... , donc c'est bon, on peut gérer maintenant le cas d'un selecteur
-                if big_container_offer is None:
-                    input('Check navigator, le selecteur de big_container_offer a peut être changé')
+                try:
+                    self.driver.find_element(By.XPATH,"//div[contains(., \"L'établissement n'est pas disponible\")]") #ça revient ici, d'après ce que j'ai pu voir sur serveur
+                    print(f'Pas de disponibilité pour {nom} pour les dates entrées')
+                    self.check_big_container = False
+                except:
+                    if big_container_offer is None:
+                        input('Check navigator, le selecteur de big_container_offer a peut être changé')
                 # si l'offre est bien visible
                 self.check_big_container = True
                 break
