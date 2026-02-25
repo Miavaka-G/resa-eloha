@@ -618,25 +618,23 @@ class resa_scraper(object):
 
                 big_container_offer = soup.find('div', {'class': 'offer-list offer-list0 last m-top-30'})
 
-                if big_container_offer is None and soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE)) != None: #c'est ce qui contient l'offre en temps normal , si c'est None, cela peut dire que la date de réservation inférieur à nos dates entrée ne peut pas être effctuée pour cet établissement
-                    no_reservable = soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE))
-                    # if no_reservable != None:
-                    print(no_reservable.text, "pour", nom)
-                    self.check_big_container = False
-                    
-                    # if no_reservable == None: #si je met ça , ça sera deux check double car la vue erroné est déja traité par le if body_text
-                    #     print("No reservable non trouvé, pas normal, on refresh")
-                    #     self.driver.refresh()
-                    #     time.sleep(2)
-                    #     continue
-                #25 02 2026 : normalement , c'est le cas où le selecteur est obsolète, car si le programme entre dedans et que la vue n'a plus de This custom... , donc c'est bon, on peut gérer maintenant le cas d'un selecteur
-                try:
-                    if big_container_offer is None:
-                        self.driver.find_element(By.XPATH,"//div[contains(., \"L'établissement n'est pas disponible\")]") #ça revient ici, d'après ce que j'ai pu voir sur serveur
+                if big_container_offer == None:
+                    if soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE)) != None: #c'est ce qui contient l'offre en temps normal , si c'est None, cela peut dire que la date de réservation inférieur à nos dates entrée ne peut pas être effctuée pour cet établissement
+                        no_reservable = soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE))
+                        # if no_reservable != None:
+                        print(no_reservable.text, "pour", nom)
+                        self.check_big_container = False
+                        
+                        # if no_reservable == None: #si je met ça , ça sera deux check double car la vue erroné est déja traité par le if body_text
+                        #     print("No reservable non trouvé, pas normal, on refresh")
+                        #     self.driver.refresh()
+                        #     time.sleep(2)
+                        #     continue
+                    #25 02 2026 : normalement , c'est le cas où le selecteur est obsolète, car si le programme entre dedans et que la vue n'a plus de This custom... , donc c'est bon, on peut gérer maintenant le cas d'un selecteur
+                    elif soup.find("div",string=re.compile("L'établissement n'est pas disponible", re.IGNORECASE)) != None: #ça revient ici, d'après ce que j'ai pu voir sur serveur
                         print(f'Pas de disponibilité pour {nom} pour les dates entrées')
                         self.check_big_container = False
-                except:
-                    if big_container_offer is None:
+                    else:
                         input('Check navigator, le selecteur de big_container_offer a peut être changé')
                 # si l'offre est bien visible
                 if big_container_offer != None:
