@@ -634,6 +634,7 @@ class resa_scraper(object):
                     elif soup.find("div",string=re.compile("L'établissement n'est pas disponible", re.IGNORECASE)) != None: #ça revient ici, d'après ce que j'ai pu voir sur serveur
                         print(f'Pas de disponibilité pour {nom} pour les dates entrées')
                         self.check_big_container = False
+                        break
                     else:
                         input('Check navigator, le selecteur de big_container_offer a peut être changé')
                 # si l'offre est bien visible
