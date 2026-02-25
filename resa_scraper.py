@@ -631,9 +631,10 @@ class resa_scraper(object):
                     #     continue
                 #25 02 2026 : normalement , c'est le cas où le selecteur est obsolète, car si le programme entre dedans et que la vue n'a plus de This custom... , donc c'est bon, on peut gérer maintenant le cas d'un selecteur
                 try:
-                    self.driver.find_element(By.XPATH,"//div[contains(., \"L'établissement n'est pas disponible\")]") #ça revient ici, d'après ce que j'ai pu voir sur serveur
-                    print(f'Pas de disponibilité pour {nom} pour les dates entrées')
-                    self.check_big_container = False
+                    if big_container_offer is None:
+                        self.driver.find_element(By.XPATH,"//div[contains(., \"L'établissement n'est pas disponible\")]") #ça revient ici, d'après ce que j'ai pu voir sur serveur
+                        print(f'Pas de disponibilité pour {nom} pour les dates entrées')
+                        self.check_big_container = False
                 except:
                     if big_container_offer is None:
                         input('Check navigator, le selecteur de big_container_offer a peut être changé')
@@ -660,6 +661,7 @@ class resa_scraper(object):
                         input('Selecteur typology not found')
                     try:
                         price = attribut_of_offer['data-track-product-price'] #en str avec virgule
+
                         price = price.replace(',','.') #pour le csv
                     except:
                         input('Selecteur price not found')
