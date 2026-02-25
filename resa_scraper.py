@@ -624,6 +624,7 @@ class resa_scraper(object):
                         # if no_reservable != None:
                         print(no_reservable.text, "pour", nom)
                         self.check_big_container = False
+                        break
                         
                         # if no_reservable == None: #si je met ça , ça sera deux check double car la vue erroné est déja traité par le if body_text
                         #     print("No reservable non trouvé, pas normal, on refresh")
