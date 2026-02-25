@@ -24,8 +24,7 @@ class resa_initializer(object):
     def __init__(self, reservation : int, week_scrap : str, end_date_scrap : str):
         self.reservation = reservation
         # self.name = name nesorina fa tsy ilaina , aleo tonga dia hoentin ilay reservation MAJ 05/01/2026
-        #Après reflexion, puisque les jours déja passés n'afficheront aucun établissement, donc on démarre le scrap à partir de la date du jours
-        self.start_date_scrap = datetime.strptime(datetime.now().strftime('%d/%m/%Y'), '%d/%m/%Y')
+        self.start_date_scrap = datetime.strptime(week_scrap, '%d/%m/%Y')
         self.name_of_file_output = f'resanc_dest{reservation}' #comme ça on verra nettement si jamais on se trompe de paramètre -r
         self.name_of_folder_output = f'{week_scrap}' #mais le nom du dossier sera la semaine de scrap pour plus de visibilité
         self.end_date_scrap = datetime.strptime(end_date_scrap, '%d/%m/%Y')

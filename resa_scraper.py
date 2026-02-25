@@ -638,8 +638,9 @@ class resa_scraper(object):
                     if big_container_offer is None:
                         input('Check navigator, le selecteur de big_container_offer a peut être changé')
                 # si l'offre est bien visible
-                self.check_big_container = True
-                break
+                if big_container_offer != None:
+                    self.check_big_container = True
+                    break
 
             #A partir d'ici safe, jamais eu de coupure, sauf selecteur changé
             if self.check_big_container == True:
