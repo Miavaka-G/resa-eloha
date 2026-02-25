@@ -429,7 +429,7 @@ class resa_scraper(object):
                         break
                 except:
                     print('Page non chargé, refresh')
-                    self.driver.get(self.driver.current_url)
+                    self.driver.refresh()
                     return self.open_filter_popup_in_eloha() #12 02 2026 , oublié
 
             button_filtre_on_eloha = self.driver.find_element(By.XPATH, '/html/body/div[4]/div/div[2]/button')
@@ -438,7 +438,7 @@ class resa_scraper(object):
             # print('Button eloha filtre clicked')
         except Exception as e:
             print(f'Button eloha filtre not found, refresh current page -> {e}')
-            self.driver.get(self.driver.current_url)
+            self.driver.refresh()
             return self.open_filter_popup_in_eloha()
 
     def filter_eloha(self, checkin_date, name_file_dest_to_split, etablissement) -> bool: #j'ai mis explicitement le second variable comme ça pour ne pas oublier
@@ -542,9 +542,9 @@ class resa_scraper(object):
                 print('Currency menu not clicked ou XPF not clicked, refresh')
                 #16 02 2026 : la page a besoin d'unn refresh 
                 print('refresh de la page car probablement => error module does not recognize this error rencontré')
-                self.driver.get(self.driver.current_url) #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
+                self.driver.refresh() #les dates en paramètres sont retenus j'ai regardé et vérifier, le currency XPF aussi
                 time.sleep(1)
-                self.driver.get(self.driver.current_url) #oui une deuxième fois
+                self.driver.refresh() #oui une deuxième fois
                 time.sleep(uniform(2.1,2.5))
                 return self.currency_choice()
             except:
@@ -579,7 +579,7 @@ class resa_scraper(object):
             #             while soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
             #                 print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
             #                 print('refresh')
-            #                 self.driver.get(self.driver.current_url)
+            #                 self.driver.refresh()
             #                 time.sleep(2)
             #             print('rappel de extract in eloha, car la vue est redevenue normalen, on peut poursuivre')
             #             return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
@@ -594,7 +594,7 @@ class resa_scraper(object):
             #     while soup.find("body").get_text(strip=True) == "The custom error module does not recognize this error.":
             #         print(f'Voici ce qui est affiché dans le body au moment de l\'erreur -> {soup.find("body").get_text(strip=True)}') #mà on voit mieux si c'est du module not recognize
             #         print('refresh')
-            #         self.driver.get(self.driver.current_url)
+            #         self.driver.refresh()
             #         time.sleep(2)
             #     print('rappel de extract in eloha, car la vue est redevenue normalen, on peut poursuivre')
             #     return self.extract_in_eloha(check_dispo, nom, localite, datas, index_for_datas)
@@ -609,25 +609,26 @@ class resa_scraper(object):
 
                 if body_text == "The custom error module does not recognize this error.":
                     print(f"Vue erreur détectée pour {nom}, refresh")
-                    self.driver.get(self.driver.current_url)
+                    self.driver.refresh()
                     time.sleep(2)
                     continue   
 
                 big_container_offer = soup.find('div', {'class': 'offer-list offer-list0 last m-top-30'})
 
-                if big_container_offer is None: #c'est ce qui contient l'offre en temps normal , si c'est None, cela peut dire que la date de réservation inférieur à nos dates entrée ne peut pas être effctuée pour cet établissement
+                if big_container_offer is None and soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE)) != None: #c'est ce qui contient l'offre en temps normal , si c'est None, cela peut dire que la date de réservation inférieur à nos dates entrée ne peut pas être effctuée pour cet établissement
                     no_reservable = soup.find("div",string=re.compile("la durée minimum", re.IGNORECASE))
-
-                    if no_reservable != None:
-                        print(no_reservable.text, "pour", nom)
-                        self.check_big_container = False
+                    # if no_reservable != None:
+                    print(no_reservable.text, "pour", nom)
+                    self.check_big_container = False
                     
-                    if no_reservable == None:
-                        print("No reservable non trouvé, pas normal, on refresh")
-                        self.driver.get(self.driver.current_url)
-                        time.sleep(2)
-                        continue
-
+                    # if no_reservable == None: #si je met ça , ça sera deux check double car la vue erroné est déja traité par le if body_text
+                    #     print("No reservable non trouvé, pas normal, on refresh")
+                    #     self.driver.refresh()
+                    #     time.sleep(2)
+                    #     continue
+                #25 02 2026 : normalement , c'est le cas où le selecteur est obsolète, car si le programme entre dedans et que la vue n'a plus de This custom... , donc c'est bon, on peut gérer maintenant le cas d'un selecteur
+                if big_container_offer is None:
+                    input('Check navigator, le selecteur de big_container_offer a peut être changé')
                 # si l'offre est bien visible
                 self.check_big_container = True
                 break
