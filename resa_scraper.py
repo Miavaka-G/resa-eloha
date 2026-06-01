@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import sys
+import random
 
 #09 01 2026
 from selenium.webdriver.support.ui import Select
@@ -65,22 +66,39 @@ class resa_scraper(object):
         self.chrome_options = webdriver.ChromeOptions()
         #no image
         pas_image = {"profile.managed_default_content_settings.images": 2}
+        # self.chrome_options.add_experimental_option("prefs", pas_image)
+        # self.chrome_options.add_argument('--ignore-certificate-errors')
+        # self.chrome_options.add_argument('--disable-gpu')
+        # self.chrome_options.add_argument('--incognito')
+        # self.chrome_options.add_argument("--no-sandbox") 
+        # self.chrome_options.add_argument("--disable-dev-shm-usage") commenté le 19 01 2025
+        # self.chrome_options.add_argument("--log-level=3") 
+        # self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        # self.chrome_options.add_argument("--headless=new") #le clique vers eloha semble e pas marche si headless
+
+        # 01 06 2026 : optimisation car sur serveur, aujourd'hui ça a capté des erreurs lorsque ça passe dans la deuxième page de réservation
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        ] 
+                
+        self.chrome_options.add_argument("--disable-geolocation")
+        self.chrome_options.add_argument('--disable-fingerprinting')
+        self.chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+        self.chrome_options.add_argument("--enable-javascript")
+        self.chrome_options.add_argument('--log-level=3') 
+        self.chrome_options.add_argument(f"user-agent={random.choice(user_agents)}") #décommenter ça aussi car sinon meme user agent
         self.chrome_options.add_experimental_option("prefs", pas_image)
         self.chrome_options.add_argument('--ignore-certificate-errors')
         self.chrome_options.add_argument('--disable-gpu')
         self.chrome_options.add_argument('--incognito')
-        self.chrome_options.add_argument("--no-sandbox") 
-        # self.chrome_options.add_argument("--disable-dev-shm-usage") commenté le 19 01 2025
-        self.chrome_options.add_argument("--log-level=3") 
+        self.chrome_options.add_argument("--no-sandbox")
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        # self.chrome_options.add_argument("--headless=new") #le clique vers eloha semble e pas marche si headless
-        
-        #pour le profil (à fin de stocker les cahes et cookies) #16 01 2026
-        # self.chrome_options.add_argument("--no-default-browser-check") # Évite la vérification du navigateur par défaut
-        # self.chrome_options.add_argument("--disable-sync")
-        # profil = self.name_of_destination_file.replace('resanc_dest','')
-        # print(f'Dossier de profil utilisé pour cette instance => profil{profil}')
-        # self.chrome_options.add_argument(f"--user-data-dir={PROFILE_CHROME}/profil{profil}")
+        self.driver = webdriver.Chrome(options=self.chrome_options)
+
+        self.driver.maximize_window()
 
         self.data_container = []
         self.count_url_no_price = 0
