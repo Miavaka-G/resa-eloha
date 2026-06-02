@@ -241,7 +241,7 @@ class resa_scraper(object):
             input(f'check url = {datas[index_dest]["url"]}')
 
             #02 01 2026 : La paillote génère une erreur lors du passage dans eloha, donc pour l'instant on va le sauter (j'ai tester à plusieurs reprise mais error à chaque fois)
-            if "paillotes" in datas[index_dest]["url"]:
+            if "paillotes" in str(datas[index_dest]["url"]):
                 print("                 ")
                 print(f'> > > La paillote génère une erreur lors du passage dans eloha, skip et passer à la suivante')
                 print("                 ")
