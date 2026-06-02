@@ -238,6 +238,7 @@ class resa_scraper(object):
 
             print(f'> > > Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
             self.goto_resa_page(datas[index_dest]["url"])
+            input(f'check url = {datas[index_dest]["url"]}')
 
             #02 01 2026 : La paillote génère une erreur lors du passage dans eloha, donc pour l'instant on va le sauter (j'ai tester à plusieurs reprise mais error à chaque fois)
             if "paillotes" in datas[index_dest]["url"]:
