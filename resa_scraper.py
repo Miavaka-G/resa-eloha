@@ -241,10 +241,11 @@ class resa_scraper(object):
             input(f'check url = {datas[index_dest]["url"]}')
 
             #02 01 2026 : La paillote génère une erreur lors du passage dans eloha, donc pour l'instant on va le sauter (j'ai tester à plusieurs reprise mais error à chaque fois)
-            if "paillotes" in str(datas[index_dest]["url"]):
+            if "https://resa.nc/hebergements/les-paillottes-de-la-ouenghi-b5faf0db-8ac7-4646-b4e5-36ed7ea90519/" == str(datas[index_dest]["url"]):
                 print("                 ")
                 print(f'> > > La paillote génère une erreur lors du passage dans eloha, skip et passer à la suivante')
                 print("                 ")
+                input('pause')
                 self.set_history_index(self.log_file['last_index_url_scraped'])
                 continue
 
