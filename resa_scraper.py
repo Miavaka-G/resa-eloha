@@ -96,9 +96,6 @@ class resa_scraper(object):
         self.chrome_options.add_argument('--incognito')
         self.chrome_options.add_argument("--no-sandbox")
         self.chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        self.driver = webdriver.Chrome(options=self.chrome_options)
-
-        self.driver.maximize_window()
 
         self.data_container = []
         self.count_url_no_price = 0
@@ -241,6 +238,14 @@ class resa_scraper(object):
 
             print(f'> > > Url {self.log_file["last_index_url_scraped"] + 1} / {len(datas)} / checkin_date = {datas[index_dest]["checkin"]} / checkout_date = {datas[index_dest]["checkout"]}')
             self.goto_resa_page(datas[index_dest]["url"])
+
+            #02 01 2026 : La paillote génère une erreur lors du passage dans eloha, donc pour l'instant on va le sauter (j'ai tester à plusieurs reprise mais error à chaque fois)
+            if "paillotes" in datas[index_dest]["url"]:
+                print("                 ")
+                print(f'> > > La paillote génère une erreur lors du passage dans eloha, skip et passer à la suivante')
+                print("                 ")
+                self.set_history_index(self.log_file['last_index_url_scraped'])
+                continue
 
             #extraction proprement dite 05 01 2026
             soupe = BeautifulSoup(self.driver.page_source.encode('utf-8').decode('utf-8'), 'html.parser')
