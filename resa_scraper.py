@@ -266,9 +266,11 @@ class resa_scraper(object):
                     input(' Le tag container n\'existe pas, check selecteur sur navigateur et relancer ')
             
             # print(f'Nombre d\'offres trouvées: {len(offres_chambres_dispo)} pour l\' url {datas[index_dest]["url"]}') PAs besoin car on ne prend plus dans resa.nc
-            if len(offres_chambres_dispo) == 0:
-                self.save_url_incomplete_data_resanc(datas[index_dest]['url'])
-                self.count_url_no_price += 1
+            #11 06 2026 : cette condition est modifié et ne teste plus seuelement len(offres_chambres_dispo) == 0 car il y a des offres qui s'y affiche mais en va toujours cvers eloha quand meme
+            if container_offres: #existe toujours
+                #11 06 2026 : Plus besoin de cette sauvegarde
+                # self.save_url_incomplete_data_resanc(datas[index_dest]['url'])
+                # self.count_url_no_price += 1
 
                 #Reflexion le 07 01 2026 : mettre quand même les données incompletes dans le csv avec les autres données (checkin, checkout, date_price, week_number) mais sans price et typology)
                 #on predn les nom et locality dans resa et on complete les prix et typo dans eloha
@@ -292,7 +294,7 @@ class resa_scraper(object):
                 #Reflexion du 09 01 2026 , plusieurs des pages resanc aujourd'hui CE JOUR , n'affichent plus de typo ni de prix donc j'opte pour eloha
                 # self.close_cookies()
                 self.go_to_eloha_website(nom)
-                #16 01 2025 : button go to eloha inexistant
+                #16 01 2025 : button go to eloha existant
                 if self.recheck == True:
                     self.switch_window()
                     self.open_filter_popup_in_eloha()
@@ -306,60 +308,67 @@ class resa_scraper(object):
                         self.extract_in_eloha(check_dispo, nom, localite, datas, index_dest) #tout se fera dans extract eloha car 21 01 2026 j'au=i aperçu d'autre typologie en ouvrant un établissement par hasard
 
                 #fin reflexion 07 01 2026
+                #11 06 2026 : ajout de cette condition pour extraire dans resa.nc si jamais le lien vers eloha e s'est pas chargé , MAIS ne pas activé sans aval de Nicolas et du client car doublons possible
+            #     elif self.recheck == False and len(offres_chambres_dispo) > 0: 
+            #         print("                 ")
+            #         print(f'> > > LIEN VERS ELOHA NON CHARGé ou INEXISTANT pour {nom}, on prend les infos dispo sur resa.nc , si rien du tout on saute.')
+            #         print("                 ")
+            #         input('PAUSE')
+            # # else: #si par chance les typologies réapparaissent sur resa.nc 
+            #         #11 06 2026 : LES TYPOLOGIES SONT réAPPARUS SUR RESA.NC, mais toujours aller vers eloha sauf si le boutton qui y va ne s'affiche pas après chargement
+            #         #09 01 2026 mettre pass car on ne va pas utiliser les infos du resanc meme si il y en a
+            #         for offre in offres_chambres_dispo:
+            #             try:
+            #                 typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
+            #                 # input(f'Typology found: {typology}')
+            #             except:
+            #                 input('Check selector, typology not found')
+            #             try:
+            #                 #Demande du 06 01 2026 : récupérer la currency aussi
+            #                 price_with_currency = offre.find('span', {'class':'item-row__value sit-tarifs__offer-price'}).text.strip().replace(' ','')
+            #                 if 'XPF' in price_with_currency:
+            #                     price = price_with_currency.replace('XPF','')
+            #                     currency = 'XPF'
+            #                 else:
+            #                     price = price_with_currency
+            #                 # input(f'Price found: {price_with_currency} / Price only: {price} / Currency only: {currency}')
+            #             except:
+            #                 input('Check selector, price not found')
+            #             try:
+            #                 container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
+            #             except:
+            #                 input('Check selector, container name localite not found')
+            #             try:
+            #                 nom = container_name_localite.find('h1').text.strip()
+            #             except:
+            #                 input('Check selector, nom not found')
+            #                 pass
+            #             try:
+            #                 localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
+            #             except:
+            #                 input('Check selector, localite not found')        
 
-            else: #si par chance les typologies réapparaissent sur resa.nc
-                #09 01 2026 mettre pass car on ne va pas utiliser les infos du resanc meme si il y en a
-                # for offre in offres_chambres_dispo:
-                #     try:
-                #         typology = offre.find('strong').text.strip() + ' ' + offre.find('span', {'class':'sit-tarifs__offer-description'}).text.strip()
-                #         # input(f'Typology found: {typology}')
-                #     except:
-                #         input('Check selector, typology not found')
-                #     try:
-                #         #Demande du 06 01 2026 : récupérer la currency aussi
-                #         price_with_currency = offre.find('span', {'class':'item-row__value sit-tarifs__offer-price'}).text.strip().replace(' ','')
-                #         if 'XPF' in price_with_currency:
-                #             price = price_with_currency.replace('XPF','')
-                #             currency = 'XPF'
-                #         elif ('EUR' or 'eur' or 'euro' or 'euros') in price_with_currency:
-                #             price = price_with_currency.replace('EUR','').replace('eur','').replace('euro','').replace('euros','')
-                #             currency = 'EUR'
-                #         else:
-                #             price = price_with_currency
-                #         # input(f'Price found: {price_with_currency} / Price only: {price} / Currency only: {currency}')
-                #     except:
-                #         input('Check selector, price not found')
-                #     try:
-                #         container_name_localite = soupe.find('div', {'class':'panel-reservation__heading'})
-                #     except:
-                #         input('Check selector, container name localite not found')
-                #     try:
-                #         nom = container_name_localite.find('h1').text.strip()
-                #     except:
-                #         input('Check selector, nom not found')
-                #         pass
-                #     try:
-                #         localite = container_name_localite.find('span', {'class':'location --size-big'}).text.strip()
-                #     except:
-                #         input('Check selector, localite not found')        
+            #             self.data_container.append({
+            #                 'web-scraper-order': '',
+            #                 'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
+            #                 'date_debut' : datas[index_dest]['checkin'],
+            #                 'date_fin' : datas[index_dest]['checkout'],
+            #                 'prix_init' : price if price else 'undefined',
+            #                 'prix_actuel' : price if price else 'undefined',
+            #                 'currency' : currency,
+            #                 'typologie' : typology if typology else 'undefined',
+            #                 'name' : nom,
+            #                 'locality' : localite,
+            #                 'date_debut-jour': '',
+            #                 'Nb semaines' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
+            #             })
 
-                #     # input(f'Nom found: {nom} / Localite found: {localite} / Typology found: {typology} / Price found: {price}')
-
-                #     self.data_container.append({
-                #         'date_price' : self.week_scrap.strftime('%d/%m/%Y'),
-                #         'checkin' : datas[index_dest]['checkin'],
-                #         'checkout' : datas[index_dest]['checkout'],
-                #         'price' : price,
-                #         'currency' : currency,
-                #         'typology' : typology,
-                #         'name' : nom,
-                #         'locality' : localite,
-                #         'week_number' : datetime.strptime(datas[index_dest]['checkin'], '%d/%m/%Y').isocalendar()[1]
-                #     })
-
-                #     self.save_in_csv()
-                pass
-            #fin reflexion 09 01 2026
+            #             input(f'> > > Données extraites DEPUIS RESA.NC pour {nom} : typology => {typology} / price => {price} {currency}')
+            #             self.save_in_csv()
+                else:
+                    print('Pas de données extraites, on passe l\'url')
+                    pass    
+            #fin reflexion 09 01 2026 et 11 06 2026
 
             self.set_history_index(self.log_file['last_index_url_scraped'])
             time.sleep(randint(2,4))
@@ -683,7 +692,8 @@ class resa_scraper(object):
         self.extract_data(self.urls_and_dates)
 
         print('                 ')
-        print(f'> > > ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
+        # print(f'> > > ResaNc Scraper finished avec succès. Nombre d\'hébergement sans prix: {self.count_url_no_price} ')
+        print(f'> > > ResaNc Scraper finished avec succès. ')
 
         self.driver.quit() #sur linux, cette instruction ne tue pas le driver immédiatement, donc ajoutons un sleep 19 01 2026
 
