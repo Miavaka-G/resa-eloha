@@ -240,12 +240,12 @@ class resa_scraper(object):
             self.goto_resa_page(datas[index_dest]["url"])
 
             #02 01 2026 : La paillote génère une erreur lors du passage dans eloha, donc pour l'instant on va le sauter (j'ai tester à plusieurs reprise mais error à chaque fois)
-            if "https://resa.nc/hebergements/les-paillottes-de-la-ouenghi-b5faf0db-8ac7-4646-b4e5-36ed7ea90519/" == str(datas[index_dest]["url"]):
-                print("                 ")
-                print(f'> > > La paillote génère une erreur lors du passage dans eloha, skip et passer à la suivante')
-                print("                 ")
-                self.set_history_index(self.log_file['last_index_url_scraped'])
-                continue
+            # if "https://resa.nc/hebergements/les-paillottes-de-la-ouenghi-b5faf0db-8ac7-4646-b4e5-36ed7ea90519/" == str(datas[index_dest]["url"]):
+            #     print("                 ")
+            #     print(f'> > > La paillote génère une erreur lors du passage dans eloha, skip et passer à la suivante')
+            #     print("                 ")
+            #     self.set_history_index(self.log_file['last_index_url_scraped'])
+            #     continue #21 08 2026 - erreur levéé
 
             #extraction proprement dite 05 01 2026
             soupe = BeautifulSoup(self.driver.page_source.encode('utf-8').decode('utf-8'), 'html.parser')
