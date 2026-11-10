@@ -453,7 +453,8 @@ class resa_scraper(object):
             while self.recheck == False:
                 try:
                     button_filter_exist = WebDriverWait(self.driver, 10).until(
-                        EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div/div[2]/button'))
+                        # EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div/div[2]/button'))
+                        EC.element_to_be_clickable((By.XPATH, '/html/body/div[5]/div/div[2]/button'))
                         # EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.new-main-resume  bg-primary w-100p with-pax > button[data-target="#SearchModal"]'))
                     )
                     # input(f'valeur bouton filter exist => {button_filter_exist}')
